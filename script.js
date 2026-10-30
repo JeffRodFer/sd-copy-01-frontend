@@ -1052,15 +1052,17 @@ function sendWA(number) {
 
 /* RESTAURANTE */
 
-/* ENVIAR PEDIDO AO RESTAURANTE (PROTEGIDO VIA BACKEND) */
-$('sendRestaurant').onclick = async () => {
+/* =====================================================
+ENVIAR PEDIDO AO RESTAURANTE (DIRETO NO FRONTEND)
+===================================================== */
+$('sendRestaurant').onclick = () => {
   if (!calculatedOrder) return;
 
   // 1. Lista de pratos que não exigem guarnições extras
   const PRATOS_COMPLETOS = ['Arrumadinho de charque', 'Arrumadinho de carne de sol', 'Cozido', 'Feijoada', 'Yakisoba'];
 
-  // 2. Pega o texto do resumo exibido na tela
-  const summaryText = $('orderSummary').innerText;
+  // 2. Pega o texto do resumo exibido na tela ou do calculatedOrder
+  const summaryText = $('orderSummary')?.innerText || calculatedOrder?.mensagem || 'Olá, gostaria de confirmar meu pedido de marmita!';
 
   // 3. Verifica se o resumo contém algum dos pratos completos
   const temPratoCompleto = PRATOS_COMPLETOS.some(prato =>
@@ -1074,28 +1076,26 @@ $('sendRestaurant').onclick = async () => {
   }
 
   try {
-    const response = await fetch(`${BACKEND_URL}/api/create-whatsapp-link`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ orderSummary: summaryText })
-    });
+    // Número do WhatsApp do restaurante com DDD
+    const numeroWhatsApp = '55819862104';
 
-    if (!response.ok) {
-      throw new Error(`Erro do servidor: ${response.status}`);
-    }
+    // Cria o link oficial do WhatsApp com a mensagem codificada
+    const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(summaryText)}`;
 
-    const data = await response.json();
+    // Abre o WhatsApp numa nova aba
+    window.open(urlWhatsApp, '_blank');
 
-    if (data.url) {
-      window.open(data.url, '_blank');
+    // Fecha o modal e limpa o pedido após enviar
+    if (typeof closeOverlay === 'function') {
       closeOverlay('orderOverlay');
-      resetOrder();
-    } else {
-      alert('Erro ao gerar o link para o WhatsApp.');
     }
+    if (typeof resetOrder === 'function') {
+      resetOrder();
+    }
+
   } catch (error) {
-    console.error('Erro na requisição:', error);
-    alert('Erro de conexão ao enviar o pedido.');
+    console.error('Erro ao abrir o WhatsApp:', error);
+    alert('Erro ao gerar o link para o WhatsApp.');
   }
 };
 
