@@ -916,7 +916,7 @@ async function calculateOrder() {
   };
 
   const response = await fetch(
-    `${BACKEND_URL}/api/orders`,
+    `${BACKEND_URL}/api/registrar-venda`,
     {
       method: 'POST',
       headers: {
