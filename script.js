@@ -944,16 +944,14 @@ async function calculateOrder() {
 
 
 /* PASSO 2 -> PASSO 3 */
-
-$('toStep3').onclick =
-  async (event) => {
-
+const btnStep3 = $('toStep3');
+if (btnStep3) {
+  btnStep3.onclick = async (event) => {
     event.preventDefault();
 
     console.log('TESTE 1: clicou em Encerrar e seguir');
 
-    const ok =
-      await calculateOrder();
+    const ok = await calculateOrder();
 
     console.log('TESTE 2: calculateOrder terminou:', ok);
 
@@ -963,21 +961,22 @@ $('toStep3').onclick =
 
     console.log('TESTE 3: antes de setStep(3)');
 
-    $('orderSummary')
-      .textContent =
-      calculatedOrder
-        .mensagem;
+    // Atualiza os elementos de texto se eles existirem no HTML
+    const summaryEl = $('orderSummary') || $('orderSummaryText');
+    if (summaryEl && calculatedOrder) {
+      summaryEl.textContent = calculatedOrder.mensagem || '';
+    }
 
-    $('finalTotal')
-      .textContent =
-      `Total: ${money(
-        calculatedOrder.total
-      )}`;
+    const totalEl = $('finalTotal');
+    if (totalEl && calculatedOrder) {
+      totalEl.textContent = `Total: ${money(calculatedOrder.total || 0)}`;
+    }
 
     setStep(3);
 
     console.log('TESTE 4: depois de setStep(3)');
   };
+}
 
 
 
