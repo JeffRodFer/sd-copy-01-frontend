@@ -317,6 +317,7 @@ ESTILOS DA SEÇÃO DE CATEGORIAS (PÁGINA PRINCIPAL)
 .category-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 8px 25px rgba(233, 83, 46, 0.1);
+  border-color: 2px #d85b00;
 }
 
 .category-icon {
