@@ -7,116 +7,84 @@ let orderState = null;
 let calculatedOrder = null;
 let adminDraft = [];
 
-const $ =
-  id => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
-
-const money =
-  value =>
-    Number(value).toLocaleString(
-      'pt-BR',
-      {
-        style: 'currency',
-        currency: 'BRL'
-      }
-    );
-
+const money = value =>
+  Number(value).toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL'
+  });
 
 function esc(s) {
-
   return String(s ?? '')
-    .replace(
-      /[&<>"']/g,
-      m => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      }[m])
-    );
-
+    .replace(/[&<>"']/g, m => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    }[m]));
 }
 
-
 function available(cats) {
-
-  return menu.filter(
-    item =>
-      cats.includes(
-        item.categoria
-      ) &&
-      item.disponivelhx
-  );
-
+  return menu.filter(item => cats.includes(item.categoria) && item.disponivel);
 }
 
 /* RELÓGIO */
-
 function updateClock() {
-
-  const d =
-    new Date();
-
-
-  $('datetime').textContent =
-    d.toLocaleString(
-      'pt-BR',
-      {
-        timeZone: 'America/Recife',
-        dateStyle: 'short',
-        timeStyle: 'medium'
-      }
-    ); HTMLDListElement
-
+  const d = new Date();
+  const el = $('datetime');
+  if (el) {
+    el.textContent = d.toLocaleString('pt-BR', {
+      timeZone: 'America/Recife',
+      dateStyle: 'short',
+      timeStyle: 'medium'
+    });
+  }
 }
 
-
-setInterval(
-  updateClock,
-  1000
-);
-
+setInterval(updateClock, 1000);
 updateClock();
-
 
 /* CARREGAR CARDÁPIO */
 async function loadMenu() {
   try {
-    const response = await fetch(
-      `${BACKEND_URL}/api/cardapio`, // <--- Usando a URL completa do backend
-      { cache: 'no-store' }
-    );
+    const response = await fetch(`${BACKEND_URL}/api/cardapio`, { cache: 'no-store' });
 
     if (!response.ok) {
-      throw new Error();
+      throw new Error('Erro ao carregar cardápio');
     }
 
     const data = await response.json();
-    // ... restante da função
+    console.log("Cardápio recebido do backend:", data);
 
-    // Raio-X: Vamos ver o que realmente veio do servidor!
-    console.log("Resposta da Vercel:", data);
-
-    // CORREÇÃO SEGURA: Se o servidor devolver um objeto com a chave 'itens', usa-a. Se devolver a lista direta, usa a lista.
     let rawMenu = Array.isArray(data) ? data : (data.itens || data.items || []);
 
-    // CORREÇÃO: Cria IDs falsos se vierem nulos e define disponibilidade como verdadeira
     menu = rawMenu.map((item, index) => ({
       ...item,
       id: item.id ? item.id : `produto-ref-${index}`,
-      disponivel: true
+      disponivel: item.disponivel !== false
     }));
 
     basePrice = Number(data.basePrice) || 20;
     deliveryPrice = Number(data.deliveryPrice) || 5;
 
-  } catch {
-    console.warn('Não foi possível carregar o cardápio.');
+  } catch (err) {
+    console.warn('Não foi possível carregar o cardápio:', err);
     menu = [];
   }
 
-  renderMenu();
+  if (typeof renderMarmitas === 'function') {
+    renderMarmitas();
+  }
+}
+
+loadMenu();
+
+// Função corrigida para exibir os itens disponíveis sem travar em propriedades inexistentes
+function available(cats) {
+  if (!menu || !Array.isArray(menu)) return [];
+  return menu.filter(item => cats.includes(item.categoria) && (item.disponivel !== false));
 }
 
 
