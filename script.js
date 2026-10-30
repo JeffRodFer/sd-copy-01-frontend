@@ -879,7 +879,7 @@ $('toStep2').onclick =
 
 
 /* =====================================================
-CALCULAR PEDIDO NO SERVIDOR (CORRIGIDO)
+CALCULAR PEDIDO NO SERVIDOR (COMPLETO)
 ===================================================== */
 
 async function calculateOrder() {
@@ -898,7 +898,6 @@ async function calculateOrder() {
     return false;
   }
 
-  // Vamos mapear as marmitas para garantir que os IDs e itens estão no formato que o backend espera
   let itensCarrinhoMap = {};
   orderState.marmitas.forEach(m => {
     m.proteinas.forEach(id => { itensCarrinhoMap[id] = (itensCarrinhoMap[id] || 0) + 1; });
@@ -910,14 +909,13 @@ async function calculateOrder() {
     quantidade
   }));
 
-  // Payload ajustado para o que a rota /api/registrar-venda do backend geralmente espera
   const payload = {
     nome: orderState.nome,
     telefone: orderState.telefone,
     endereco: orderState.address,
     entrega: orderState.entrega,
     marmitas: orderState.marmitas,
-    itensCarrinho: itensCarrinho // Enviando também o carrinho consolidado caso o backend exija
+    itensCarrinho: itensCarrinho
   };
 
   console.log("PAYLOAD enviado para o backend:", payload);
@@ -936,7 +934,60 @@ async function calculateOrder() {
     return false;
   }
 
-  calculatedOrder = data;
+  // ⬇️ ESSE É O TRECHO QUE VOCÊ ACABOU DE ENVIAR (VAI AQUI NO FINAL) ⬇️
+  let precoMarmita = 20.00;
+  let taxaEntrega = orderState.entrega === 'delivery' ? 5.00 : 0.00;
+  let totalMarmitas = orderState.marmitas.length * precoMarmita;
+  let totalGeral = totalMarmitas + taxaEntrega;
+
+  const nomeItem = (id) => {
+    const it = menu.find(x => Number(x.id) === Number(id));
+    return it ? it.nome : `Item #${id}`;
+  };
+
+  const codigoPedido = `RI-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+  const codigoVerificacao = Math.random().toString(36).substring(2, 10).toUpperCase();
+
+  let msg = `*${orderState.nome}*\n`;
+  msg += `${orderState.telefone}\n`;
+  msg += `${orderState.address}\n`;
+  msg += `Entrega: (${orderState.entrega === 'delivery' ? 'X' : ' '})\n`;
+  msg += `Retira: (${orderState.entrega === 'retirada' ? 'X' : ' '})\n\n`;
+
+  orderState.marmitas.forEach((m, index) => {
+    msg += `*Pedido ${String(index + 1).padStart(2, '0')}:*\n`;
+    m.proteinas.forEach(id => {
+      msg += `01 ${nomeItem(id)}\n`;
+    });
+    m.guarnicoes.forEach(id => {
+      msg += `${nomeItem(id)}\n`;
+    });
+    msg += `R$ ${precoMarmita.toFixed(2).replace('.', ',')}\n`;
+    if (m.observacao) {
+      msg += `Obs: ${m.observacao}\n`;
+    }
+    msg += `\n`;
+  });
+
+  msg += `---------------------------------------------------------------------------------\n`;
+  orderState.marmitas.forEach((_, index) => {
+    msg += `Marmita ${String(index + 1).padStart(2, '0')} = R$ ${precoMarmita.toFixed(2).replace('.', ',')}\n`;
+  });
+  if (orderState.entrega === 'delivery') {
+    msg += `Taxa de Entrega = R$ ${taxaEntrega.toFixed(2).replace('.', ',')}\n`;
+  }
+  msg += `*Total final R$ ${totalGeral.toFixed(2).replace('.', ',')}*\n`;
+  msg += `Pedido: ${codigoPedido}\n`;
+  msg += `Verificação: ${codigoVerificacao}\n\n`;
+  msg += `💳 *Pagamento via PIX:*\n`;
+  msg += `Chave: 30571173845\n`;
+  msg += `(Por favor, envie o comprovante por aqui!)`;
+
+  calculatedOrder = {
+    mensagem: data.mensagem || msg,
+    total: data.total || totalGeral
+  };
+
   return true;
 }
 
