@@ -1028,40 +1028,7 @@ async function calculateOrder() {
       console.log('TESTE 4: depois de setStep(3)');
     };
   }
-  /* =====================================================
-FUNÇÃO GLOBAL PARA O BOTÃO ENCERRAR E SEGUIR
-===================================================== */
-  window.clicarEncerrarPedido = async function (event) {
-    if (event) {
-      event.preventDefault();
-    }
-
-    console.log('TESTE 1: Clicou com sucesso no botão Encerrar e seguir!');
-
-    // 1. Executa o cálculo e salvamento no backend
-    const ok = await calculateOrder();
-
-    console.log('TESTE 2: calculateOrder terminou:', ok);
-
-    if (!ok) {
-      console.warn('O calculateOrder retornou falso. Verifique os erros no console.');
-      return;
-    }
-
-    console.log('TESTE 3: antes de setStep(3)');
-
-    // 2. Atualiza os elementos de texto na tela com segurança
-    const summaryEl = $('orderSummary') || $('orderSummaryText');
-    if (summaryEl && calculatedOrder) {
-      summaryEl.textContent = calculatedOrder.mensagem || '';
-    }
-
-    const totalEl = $('finalTotal');
-    if (totalEl && calculatedOrder) {
-      const valorTotal = Number(calculatedOrder.total || 0);
-      totalEl.textContent = `Total: R$ ${valorTotal.toFixed(2).replace('.', ',')}`;
-    }
-
+  
     // 3. Avança para o passo 3 (resumo e envio ao WhatsApp)
     if (typeof setStep === 'function') {
       setStep(3);
@@ -1586,4 +1553,37 @@ FUNÇÃO GLOBAL PARA O BOTÃO ENCERRAR E SEGUIR
     }
 
   }
-}
+// Função global garantida na raiz do script.js
+window.clicarEncerrarPedido = async function(event) {
+  if (event) {
+    event.preventDefault();
+  }
+
+  console.log('TESTE 1: Clicou com sucesso no botão Encerrar e seguir!');
+
+  const ok = await calculateOrder();
+  console.log('TESTE 2: calculateOrder terminou:', ok);
+
+  if (!ok) {
+    return;
+  }
+
+  console.log('TESTE 3: antes de setStep(3)');
+
+  const summaryEl = document.getElementById('orderSummary') || document.getElementById('orderSummaryText');
+  if (summaryEl && calculatedOrder) {
+    summaryEl.textContent = calculatedOrder.mensagem || '';
+  }
+
+  const totalEl = document.getElementById('finalTotal');
+  if (totalEl && calculatedOrder) {
+    const valorTotal = Number(calculatedOrder.total || 0);
+    totalEl.textContent = `Total: R$ ${valorTotal.toFixed(2).replace('.', ',')}`;
+  }
+
+  if (typeof setStep === 'function') {
+    setStep(3);
+  }
+
+  console.log('TESTE 4: depois de setStep(3)');
+};
