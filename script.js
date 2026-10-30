@@ -84,7 +84,7 @@ updateClock();
 async function loadMenu() {
   try {
     const response = await fetch(
-      '/api/menu',
+      `${BACKEND_URL}/api/cardapio`, // <--- Usando a URL completa do backend
       { cache: 'no-store' }
     );
 
@@ -93,6 +93,7 @@ async function loadMenu() {
     }
 
     const data = await response.json();
+    // ... restante da função
 
     // Raio-X: Vamos ver o que realmente veio do servidor!
     console.log("Resposta da Vercel:", data);
