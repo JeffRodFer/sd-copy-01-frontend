@@ -1074,7 +1074,7 @@ $('sendRestaurant').onclick = async () => {
   }
 
   try {
-    const response = await fetch('/api/create-whatsapp-link', {
+    const response = await fetch(`${BACKEND_URL}/api/create-whatsapp-link`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ orderSummary: summaryText })
