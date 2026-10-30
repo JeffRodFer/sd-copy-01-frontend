@@ -74,9 +74,8 @@ async function loadMenu() {
     menu = [];
   }
 
-  if (typeof renderMarmitas === 'function') {
-    renderMarmitas();
-  }
+  // REMOVIDO: A chamada automática ao renderMarmitas() foi retirada daqui 
+  // para evitar erros antes do cliente preencher os dados cadastrais.
 }
 
 loadMenu();
@@ -534,14 +533,19 @@ function qtySection(
    ========================================================= */
 
 function renderMarmitas() {
-  const container = $('marmitas');
+  // Se o cliente ainda não avançou para a escolha das marmitas, não faz nada
+  if (!orderState || !orderState.marmitas) return;
+
+  const container = $('marmitasContainer') || $('marmitas');
   if (!container) return;
 
   container.innerHTML = orderState.marmitas
-    .map(choiceHTML)
+    .map((m, i) => choiceHTML(m, i)) // Garanta que usa a sua função de renderização de cada marmita
     .join('');
 
-  syncFormToState();
+  if (typeof syncFormToState === 'function') {
+    syncFormToState();
+  }
 }
 
 
