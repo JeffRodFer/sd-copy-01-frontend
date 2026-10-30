@@ -1542,4 +1542,6 @@ async function calculateOrder() {
     } catch (erro) {
       console.error('Erro ao buscar /api/config:', erro);
     }
+
   }
+}
