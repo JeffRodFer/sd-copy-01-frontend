@@ -1,0 +1,269 @@
+:root {
+  --primary: #27ae60;
+  --primary-dark: #219653;
+  --gray-bg: #f4f6f8;
+  --border-color: #dcdcdc;
+  --text-color: #2c3e50;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: var(--gray-bg);
+  color: var(--text-color);
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 680px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 25px;
+  position: relative;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+header h1 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+}
+
+header p {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+  margin-top: 5px;
+}
+
+.btn-admin-link {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #f1f2f6;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: #57606f;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.btn-admin-link:hover {
+  background: #dfe4ea;
+}
+
+.step {
+  display: none;
+}
+
+.step.active {
+  display: block;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.card h2 {
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  color: #2c3e50;
+  border-bottom: 2px solid #f1f2f6;
+  padding-bottom: 10px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #57606f;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.field input, .field textarea, .field select {
+  padding: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  background: #fafbfc;
+}
+
+.field input:focus, .field textarea:focus {
+  border-color: var(--primary);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+}
+
+.delivery {
+  background: #f8f9fa;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #eee;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.delivery label {
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.btn {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn.green {
+  background: var(--primary);
+  color: white;
+}
+
+.btn.green:hover {
+  background: var(--primary-dark);
+}
+
+.btn.gray {
+  background: #dfe4ea;
+  color: #2f3640;
+}
+
+.btn.gray:hover {
+  background: #ced6e0;
+}
+
+.error-msg {
+  background: #ffedea;
+  color: #d63031;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+  border-left: 4px solid #d63031;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.item-box {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  background: #fafbfc;
+  transition: all 0.2s;
+}
+
+.item-box:hover {
+  border-color: var(--primary);
+  background: #f0fdf4;
+}
+
+.item-box input[type="checkbox"] {
+  accent-color: var(--primary);
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.item-box.esgotado {
+  opacity: 0.4;
+  background: #f1f2f6;
+  cursor: not-allowed;
+}
+
+.summary-box {
+  background: #f8f9fa;
+  border: 1px solid #e1e4e8;
+  border-radius: 8px;
+  padding: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-table th, .admin-table td {
+  border: 1px solid #e1e4e8;
+  padding: 10px;
+  text-align: left;
+}
+
+.admin-table th {
+  background-color: #f1f2f6;
+  color: #2f3640;
+}
+
+.admin-table input[type="number"] {
+  width: 70px;
+  padding: 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}

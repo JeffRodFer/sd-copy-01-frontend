@@ -1,0 +1,353 @@
+let menuData = [];
+let orderState = {
+  nome: '',
+  telefone: '',
+  entrega: 'delivery',
+  address: '',
+  marmitas: []
+};
+let calculatedOrderResult = null;
+
+// Configurações do Cliente
+const BACKEND_URL = 'https://sd-copy-01-backend.vercel.app';
+const WHATSAPP_PHONE = '5581920036280'; // Telefone do estabelecimento
+
+async function loadMenu() {
+  try {
+    const response = await fetch(`${BACKEND_URL}/api/cardapio`);
+    const data = await response.json();
+    menuData = data;
+  } catch (err) {
+    console.error("Erro ao carregar cardápio:", err);
+  }
+}
+
+loadMenu();
+
+function setStep(step) {
+  document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+  
+  if (step === 'admin') {
+    document.getElementById('step-admin').classList.add('active');
+    renderAdminTable();
+  } else {
+    document.getElementById(`orderStep${step}`)?.classList.add('active');
+  }
+  window.scrollTo(0, 0);
+}
+
+function avancarParaPasso2() {
+  const nome = document.getElementById('customerName').value.trim();
+  const telefone = document.getElementById('customerPhone').value.trim();
+  const endereco = document.getElementById('customerAddress').value.trim();
+  const qtdMarmitas = parseInt(document.getElementById('mealCount').value) || 1;
+  
+  const entregaRadio = document.querySelector('input[name="delivery"]:checked');
+  const isDelivery = entregaRadio ? entregaRadio.value === 'true' : true;
+  const errorDiv = document.getElementById('orderError1');
+
+  if (!nome || !telefone || (isDelivery && !endereco)) {
+    if (errorDiv) {
+      errorDiv.textContent = 'Por favor, preencha o Nome, Telefone e o Endereço de entrega.';
+      errorDiv.style.display = 'block';
+    }
+    return;
+  }
+
+  if (errorDiv) {
+    errorDiv.style.display = 'none';
+  }
+
+  orderState.nome = nome;
+  orderState.telefone = telefone;
+  orderState.entrega = isDelivery ? 'delivery' : 'retirada';
+  orderState.address = endereco;
+
+  orderState.marmitas = Array.from({ length: qtdMarmitas }, () => ({
+    guarnicoes: [],
+    proteinas: [],
+    observacao: ''
+  }));
+
+  renderMarmitas();
+  setStep(2);
+}
+
+function available(categorias) {
+  if (!menuData || !Array.isArray(menuData)) return [];
+  return menuData.filter(i => categorias.includes(i.categoria));
+}
+
+function money(val) {
+  return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function esc(str) {
+  return String(str).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderMarmitas() {
+  const container = document.getElementById('marmitasContainer');
+  if (!container) return;
+  const basePrice = 20;
+
+  container.innerHTML = orderState.marmitas.map((m, i) => `
+    <div class="card" style="border: 1px dashed var(--primary); background: #fafdfb; margin-bottom: 20px; padding: 20px;">
+      <h3 style="color: var(--primary); margin-bottom: 15px;">Marmita ${String(i + 1).padStart(2, '0')} — Base ${money(basePrice)}</h3>
+
+      <div class="section-title" style="font-size: 0.9rem; font-weight: bold; color: #57606f; text-transform: uppercase;">Guarnições <span style="font-size:0.8rem; color:#888">(máx. 4)</span></div>
+      <div class="items-grid">
+        ${available(['Guarnições']).map(x => {
+          const esgotado = !x.disponivel || x.estoque <= 0;
+          return `
+            <label class="item-box ${esgotado ? 'esgotado' : ''}">
+              <span>${esc(x.nome)}</span>
+              <input type="checkbox" data-kind="g" data-index="${i}" data-id="${x.id}" ${esgotado ? 'disabled' : ''} ${m.guarnicoes.includes(x.id) ? 'checked' : ''}>
+            </label>
+          `;
+        }).join('')}
+      </div>
+
+      <div class="section-title" style="font-size: 0.9rem; font-weight: bold; color: #57606f; text-transform: uppercase; margin-top: 15px;">Proteínas <span style="font-size:0.8rem; color:#888">(escolha 1 ou 2)</span></div>
+      <div class="items-grid">
+        ${available(['Proteínas']).map(x => {
+          const esgotado = !x.disponivel || x.estoque <= 0;
+          return `
+            <label class="item-box protein ${esgotado ? 'esgotado' : ''}">
+              <span>${esc(x.nome)}</span>
+              <input type="checkbox" data-kind="p" data-index="${i}" data-id="${x.id}" ${esgotado ? 'disabled' : ''} ${m.proteinas.includes(x.id) ? 'checked' : ''}>
+            </label>
+          `;
+        }).join('')}
+      </div>
+
+      <div class="field" style="margin-top: 15px;">
+        <label>Observação da Marmita ${i + 1} <span style="font-size:0.75rem; color:#888">(opcional)</span></label>
+        <textarea maxlength="90" data-obs="${i}" placeholder="Ex.: Bastante molho parmegiana, Para as 13h" style="width:100%; padding:10px; border-radius:6px; border:1px solid #ccc;">${m.observacao}</textarea>
+      </div>
+    </div>
+  `).join('');
+}
+
+function syncFormToState() {
+  orderState.marmitas.forEach(m => {
+    m.guarnicoes = [];
+    m.proteinas = [];
+  });
+
+  document.querySelectorAll('#marmitasContainer input[data-kind]:checked').forEach(el => {
+    const i = Number(el.dataset.index);
+    const key = el.dataset.kind === 'g' ? 'guarnicoes' : 'proteinas';
+    orderState.marmitas[i][key].push(Number(el.dataset.id));
+  });
+
+  document.querySelectorAll('#marmitasContainer textarea[data-obs]').forEach(el => {
+    const i = Number(el.dataset.obs);
+    if (orderState.marmitas[i]) {
+      orderState.marmitas[i].observacao = el.value;
+    }
+  });
+}
+
+async function goToStep3() {
+  syncFormToState();
+  const errEl = document.getElementById('orderError2');
+  if (errEl) errEl.style.display = 'none';
+
+  const invalid = orderState.marmitas.findIndex(m => m.proteinas.length < 1 || m.proteinas.length > 2 || m.guarnicoes.length > 4);
+  if (invalid >= 0) {
+    if (errEl) {
+      errEl.textContent = `Marmita ${invalid + 1}: escolha de 1 a 2 proteínas e no máximo 4 guarnições.`;
+      errEl.style.display = 'block';
+    }
+    return;
+  }
+
+  let itensCarrinhoMap = {};
+  orderState.marmitas.forEach(m => {
+    m.proteinas.forEach(id => { itensCarrinhoMap[id] = (itensCarrinhoMap[id] || 0) + 1; });
+    m.guarnicoes.forEach(id => { itensCarrinhoMap[id] = (itensCarrinhoMap[id] || 0) + 1; });
+  });
+
+  const itensCarrinho = Object.entries(itensCarrinhoMap).map(([id, quantidade]) => ({
+    id: Number(id),
+    quantidade
+  }));
+
+  try {
+    const responseVenda = await fetch(`${BACKEND_URL}/api/registrar-venda`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itensCarrinho })
+    });
+
+    const dataVenda = await responseVenda.json();
+    if (!responseVenda.ok) {
+      throw new Error(dataVenda.erro || 'Estoque insuficiente para concluir o pedido.');
+    }
+
+    let precoMarmita = 20.00;
+    let taxaEntrega = orderState.entrega === 'delivery' ? 5.00 : 0.00;
+    let totalMarmitas = orderState.marmitas.length * precoMarmita;
+    let totalGeral = totalMarmitas + taxaEntrega;
+
+    const nomeItem = id => {
+      const it = menuData.find(x => x.id === id);
+      return it ? it.nome : `Item #${id}`;
+    };
+
+    // Geração de códigos de pedido e verificação únicos
+    const agora = new Date();
+    const ano = agora.getFullYear();
+    const mes = String(agora.getMonth() + 1).padStart(2, '0');
+    const dia = String(agora.getDate()).padStart(2, '0');
+    const hora = String(agora.getHours()).padStart(2, '0');
+    const min = String(agora.getMinutes()).padStart(2, '0');
+    const sec = String(agora.getSeconds()).padStart(2, '0');
+    const codigoPedido = `RI-${ano}${mes}${dia}${hora}${min}${sec}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    const codigoVerificacao = Math.random().toString(36).substring(2, 10).toUpperCase();
+
+    // Montagem da mensagem idêntica ao modelo solicitado
+    let msg = `*${orderState.nome}*\n`;
+    msg += `${orderState.telefone}\n`;
+    msg += `${orderState.address}\n`;
+    msg += `Entrega: (${orderState.entrega === 'delivery' ? 'X' : ' '})\n`;
+    msg += `Retira: (${orderState.entrega === 'retirada' ? 'X' : ' '})\n\n`;
+
+    orderState.marmitas.forEach((m, index) => {
+      msg += `*Pedido ${String(index + 1).padStart(2, '0')}:*\n`;
+      m.proteinas.forEach(id => {
+        msg += `01 ${nomeItem(id)}\n`;
+      });
+      m.guarnicoes.forEach(id => {
+        msg += `${nomeItem(id)}\n`;
+      });
+      msg += `R$ ${precoMarmita.toFixed(2).replace('.', ',')}\n`;
+      if (m.observacao) {
+        msg += `Obs: ${m.observacao}\n`;
+      }
+      msg += `\n`;
+    });
+
+    msg += `---------------------------------------------------------------------------------\n`;
+    orderState.marmitas.forEach((_, index) => {
+      msg += `Marmita ${String(index + 1).padStart(2, '0')} = R$ ${precoMarmita.toFixed(2).replace('.', ',')}\n`;
+    });
+    if (orderState.entrega === 'delivery') {
+      msg += `Taxa de Entrega = R$ ${taxaEntrega.toFixed(2).replace('.', ',')}\n`;
+    }
+    msg += `*Total final R$ ${totalGeral.toFixed(2).replace('.', ',')}*\n`;
+    msg += `Pedido: ${codigoPedido}\n`;
+    msg += `Verificação: ${codigoVerificacao}\n\n`;
+    msg += `💳 *Pagamento via PIX:*\n`;
+    msg += `Chave: 30571173845\n`;
+    msg += `(Por favor, envie o comprovante por aqui!)`;
+
+    calculatedOrderResult = { mensagem: msg };
+    document.getElementById('orderSummaryText').textContent = msg;
+    
+    setStep(3);
+  } catch (err) {
+    if (errEl) {
+      errEl.textContent = err.message;
+      errEl.style.display = 'block';
+    }
+  }
+}
+
+function sendToWhatsApp() {
+  if (!calculatedOrderResult) return;
+  const text = encodeURIComponent(calculatedOrderResult.mensagem);
+  window.open(`https://wa.me/${WHATSAPP_PHONE}?text=${text}`, '_blank');
+}
+
+function abrirPainelAdmin() {
+  const senha = prompt("Digite a senha do Administrador:");
+  if (!senha) return;
+
+  fetch(`${BACKEND_URL}/admin/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ senha })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.autorizado) {
+      setStep('admin');
+    } else {
+      alert("Senha incorreta!");
+    }
+  })
+  .catch(() => alert("Erro ao conectar com o servidor."));
+}
+
+async function renderAdminTable() {
+  await loadMenu();
+  const tbody = document.getElementById('adminTableBody');
+  if (!tbody) return;
+  
+  tbody.innerHTML = menuData.map(item => `
+    <tr>
+      <td>${item.id}</td>
+      <td>${esc(item.nome)}</td>
+      <td>${esc(item.categoria)}</td>
+      <td><input type="number" step="0.01" id="adm-preco-${item.id}" value="${item.preco}"></td>
+      <td><input type="number" id="adm-estoque-${item.id}" value="${item.estoque}"></td>
+      <td><input type="checkbox" id="adm-disp-${item.id}" ${item.disponivel ? 'checked' : ''}></td>
+    </tr>
+  `).join('');
+}
+
+async function salvarAlteracoesAdmin() {
+  const produtosAtualizados = menuData.map(item => {
+    const preco = parseFloat(document.getElementById(`adm-preco-${item.id}`).value) || 0;
+    const estoque = parseInt(document.getElementById(`adm-estoque-${item.id}`).value) || 0;
+    const disponivel = document.getElementById(`adm-disp-${item.id}`).checked;
+    return { id: item.id, preco, estoque, disponivel };
+  });
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/admin/atualizar-lote`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ produtos: produtosAtualizados })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      const msg = document.getElementById('adminMsg');
+      if (msg) {
+        msg.textContent = data.mensagem;
+        msg.style.display = 'block';
+      }
+      loadMenu();
+    } else {
+      alert(data.erro || "Erro ao salvar.");
+    }
+  } catch (err) {
+    alert("Erro de conexão ao salvar alterações.");
+  }
+}
+
+async function fazerEstornoAdmin() {
+  const id = parseInt(prompt("Digite o ID do produto para estornar:"));
+  const qtd = parseInt(prompt("Digite a quantidade a devolver:"));
+
+  if (!id || !qtd || qtd <= 0) return;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/admin/estornar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ itensEstorno: [{ id, quantidade: qtd }] })
+    });
+    const data = await res.json();
+    if (res.ok) {
+      alert(data.mensagem);
+      renderAdminTable();
+    } else {
+      alert(data.erro || "Erro no estorno.");
+    }
+  } catch (err) {
+    alert("Erro de conexão.");
+  }
+}
