@@ -885,56 +885,54 @@ CALCULAR PEDIDO NO SERVIDOR (CORRIGIDO)
 async function calculateOrder() {
   clearErr('orderError2');
 
-  // 🔥 PASSO CRUCIAL: Sincroniza os cliques dos inputs do HTML para dentro do orderState antes de validar!
   if (typeof syncFormToState === 'function') {
     syncFormToState();
   }
 
-  const invalid =
-    orderState.marmitas
-      .findIndex(
-        m =>
-          m.proteinas.length < 1 ||
-          m.proteinas.length > 2 ||
-          m.guarnicoes.length > 4
-      );
+  const invalid = orderState.marmitas.findIndex(
+    m => m.proteinas.length < 1 || m.proteinas.length > 2 || m.guarnicoes.length > 4
+  );
 
   if (invalid >= 0) {
-    showErr(
-      'orderError2',
-      `Marmita ${invalid + 1}: escolha 1 ou 2 proteínas e no máximo 4 guarnições.`
-    );
+    showErr('orderError2', `Marmita ${invalid + 1}: escolha 1 ou 2 proteínas e no máximo 4 guarnições.`);
     return false;
   }
 
+  // Vamos mapear as marmitas para garantir que os IDs e itens estão no formato que o backend espera
+  let itensCarrinhoMap = {};
+  orderState.marmitas.forEach(m => {
+    m.proteinas.forEach(id => { itensCarrinhoMap[id] = (itensCarrinhoMap[id] || 0) + 1; });
+    m.guarnicoes.forEach(id => { itensCarrinhoMap[id] = (itensCarrinhoMap[id] || 0) + 1; });
+  });
+
+  const itensCarrinho = Object.entries(itensCarrinhoMap).map(([id, quantidade]) => ({
+    id: Number(id),
+    quantidade
+  }));
+
+  // Payload ajustado para o que a rota /api/registrar-venda do backend geralmente espera
   const payload = {
     nome: orderState.nome,
     telefone: orderState.telefone,
     endereco: orderState.address,
     entrega: orderState.entrega,
-    marmitas: orderState.marmitas
+    marmitas: orderState.marmitas,
+    itensCarrinho: itensCarrinho // Enviando também o carrinho consolidado caso o backend exija
   };
 
-  const response = await fetch(
-    `${BACKEND_URL}/api/registrar-venda`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    }
-  );
+  console.log("PAYLOAD enviado para o backend:", payload);
 
-  const data = await response
-    .json()
-    .catch(() => ({}));
+  const response = await fetch(`${BACKEND_URL}/api/registrar-venda`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    showErr(
-      'orderError2',
-      data.erro || 'Não foi possível calcular o pedido.'
-    );
+    console.error("Erro retornado pelo backend:", data);
+    showErr('orderError2', data.erro || data.message || 'Não foi possível registrar o pedido.');
     return false;
   }
 
