@@ -1077,7 +1077,7 @@ $('sendRestaurant').onclick = () => {
 
   try {
     // Número do WhatsApp do restaurante com DDD
-    const numeroWhatsApp = '55819862104';
+    const numeroWhatsApp = '5581920036280';
 
     // Cria o link oficial do WhatsApp com a mensagem codificada
     const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(summaryText)}`;
