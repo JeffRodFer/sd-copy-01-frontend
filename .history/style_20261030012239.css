@@ -1,0 +1,231 @@
+:root {
+  --primary: #27ae60;
+  --primary-dark: #219653;
+  --gray-bg: #f9f9f9;
+  --border-color: #ddd;
+  --text-color: #333;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: var(--gray-bg);
+  color: var(--text-color);
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 650px;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 25px;
+  position: relative;
+}
+
+header h1 {
+  font-size: 1.8rem;
+  color: #2c3e50;
+}
+
+header p {
+  color: #7f8c8d;
+  font-size: 0.95rem;
+}
+
+.btn-admin-link {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  color: #95a5a6;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.btn-admin-link:hover {
+  color: var(--primary);
+}
+
+.step {
+  display: none;
+}
+
+.step.active {
+  display: block;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom: 20px;
+}
+
+.card h2 {
+  font-size: 1.4rem;
+  margin-bottom: 15px;
+  color: #2c3e50;
+  border-bottom: 2px solid #f1f1f1;
+  padding-bottom: 8px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: #34495e;
+}
+
+.field input, .field textarea, .field select {
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.field input:focus, .field textarea:focus {
+  border-color: var(--primary);
+}
+
+.delivery {
+  margin: 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.delivery label {
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.2s;
+}
+
+.btn.green {
+  background: var(--primary);
+  color: white;
+}
+
+.btn.green:hover {
+  background: var(--primary-dark);
+}
+
+.btn.gray {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.btn.gray:hover {
+  background: #d0d0d0;
+}
+
+.error-msg {
+  background: #fde8e8;
+  color: #c0392b;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.item-box {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  font-size: 0.9rem;
+  background: #fafafa;
+}
+
+.item-box.esgotado {
+  opacity: 0.5;
+  background: #eee;
+  cursor: not-allowed;
+}
+
+.summary-box {
+  background: #fdfdfd;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 15px;
+  font-size: 0.95rem;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.admin-table th, .admin-table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.admin-table th {
+  background-color: #f2f2f2;
+}
+
+.admin-table input[type="number"] {
+  width: 70px;
+  padding: 4px;
+}

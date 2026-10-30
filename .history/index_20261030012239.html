@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Delivery</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Restaurante de Delivery</h1>
+      <p>Monte sua marmita com qualidade e rapidez</p>
+      <button class="btn-admin-link" onclick="abrirPainelAdmin()">Painel Admin</button>
+    </header>
+
+    <!-- PASSO 1: DADOS INICIAIS -->
+    <div id="orderStep1" class="step active">
+      <div class="card">
+        <h2>Faça seu Pedido</h2>
+
+        <div id="orderError1" class="error-msg" style="display: none;"></div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label>Nome Completo</label>
+            <input id="customerName" autocomplete="name" placeholder="Ex.: Carlos Silva">
+          </div>
+
+          <div class="field">
+            <label>Telefone</label>
+            <input id="customerPhone" inputmode="tel" autocomplete="tel" maxlength="15" placeholder="(81) 99999-8888">
+          </div>
+
+          <div class="field full">
+            <label>Endereço de Entrega</label>
+            <input id="customerAddress" autocomplete="street-address" placeholder="Rua, número, bairro, complemento...">
+          </div>
+
+          <div class="field">
+            <label>Quantidade de Marmitas</label>
+            <input id="mealCount" type="number" min="1" max="20" value="1">
+          </div>
+        </div>
+
+        <div class="delivery">
+          <label>
+            <input type="radio" name="delivery" value="true" checked> Entrega em casa - R$ 5,00
+          </label>
+          <label>
+            <input type="radio" name="delivery" value="false"> Retirar no Restaurante - R$ 0,00
+          </label>
+        </div>
+
+        <div class="actions">
+          <button class="btn gray" id="closeOrder1" onclick="location.reload()">Cancelar</button>
+          <button class="btn green" id="toStep2" onclick="avancarParaPasso2()">Continuar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASSO 2: MONTAGEM DAS MARMITAS -->
+    <div id="orderStep2" class="step">
+      <div class="card">
+        <h2>Monte suas Marmitas</h2>
+        <div id="orderError2" class="error-msg" style="display: none;"></div>
+        
+        <div id="marmitasContainer"></div>
+
+        <div class="actions">
+          <button class="btn gray" onclick="setStep(1)">Voltar</button>
+          <button class="btn green" onclick="goToStep3()">Avançar para Resumo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASSO 3: RESUMO E ENVIO -->
+    <div id="orderStep3" class="step">
+      <div class="card">
+        <h2>Resumo do Pedido</h2>
+        <div class="summary-box">
+          <pre id="orderSummaryText" style="white-space: pre-wrap; font-family: inherit;"></pre>
+        </div>
+        <h3 id="finalTotalText" style="margin: 15px 0; color: var(--primary);"></h3>
+
+        <div class="actions">
+          <button class="btn gray" onclick="setStep(2)">Voltar</button>
+          <button class="btn green" onclick="sendToWhatsApp()">Enviar para o WhatsApp</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAINEL ADMINISTRATIVO -->
+    <div id="step-admin" class="step">
+      <div class="card">
+        <h2>Painel Administrativo</h2>
+        <div id="adminMsg" class="success-msg" style="display: none; color: green; margin-bottom: 10px;"></div>
+        
+        <div style="overflow-x: auto;">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Categoria</th>
+                <th>Preço (R$)</th>
+                <th>Estoque</th>
+                <th>Disponível</th>
+              </tr>
+            </thead>
+            <tbody id="adminTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="actions" style="margin-top: 20px;">
+          <button class="btn gray" onclick="setStep(1)">Sair do Admin</button>
+          <button class="btn green" onclick="salvarAlteracoesAdmin()">Salvar Alterações</button>
+          <button class="btn" style="background: #d9534f; color: white;" onclick="fazerEstornoAdmin()">Estornar / Devolver Estoque</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
