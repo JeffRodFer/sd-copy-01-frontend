@@ -1,148 +1,144 @@
+const BACKEND_URL = 'https://sd-copy-01-backend.vercel.app';
+
 let menu = [];
+let basePrice = 20;
+let deliveryPrice = 5;
+let orderState = null;
+let calculatedOrder = null;
+let adminDraft = [];
 
-    let basePrice = 20;
-
-    let deliveryPrice = 5;
-
-    let orderState = null;
-
-    let calculatedOrder = null;
-
-    let adminDraft = [];
+const $ =
+  id => document.getElementById(id);
 
 
-    const $ =
-      id => document.getElementById(id);
-
-
-    const money =
-      value =>
-        Number(value).toLocaleString(
-          'pt-BR',
-          {
-            style: 'currency',
-            currency: 'BRL'
-          }
-        );
-
-
-    function esc(s) {
-
-      return String(s ?? '')
-        .replace(
-          /[&<>"']/g,
-          m => ({
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-          }[m])
-        );
-
-    }
-
-
-    function available(cats) {
-
-      return menu.filter(
-        item =>
-          cats.includes(
-            item.categoria
-          ) &&
-          item.disponivelhx
-      );
-
-    }
-
-    /* RELÓGIO */
-
-    function updateClock() {
-
-      const d =
-        new Date();
-
-
-      $('datetime').textContent =
-        d.toLocaleString(
-          'pt-BR',
-          {
-            timeZone: 'America/Recife',
-            dateStyle: 'short',
-            timeStyle: 'medium'
-          }
-        ); HTMLDListElement
-
-    }
-
-
-    setInterval(
-      updateClock,
-      1000
+const money =
+  value =>
+    Number(value).toLocaleString(
+      'pt-BR',
+      {
+        style: 'currency',
+        currency: 'BRL'
+      }
     );
 
-    updateClock();
+
+function esc(s) {
+
+  return String(s ?? '')
+    .replace(
+      /[&<>"']/g,
+      m => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      }[m])
+    );
+
+}
 
 
-    /* CARREGAR CARDÁPIO */
-    async function loadMenu() {
-      try {
-        const response = await fetch(
-          '/api/menu',
-          { cache: 'no-store' }
-        );
+function available(cats) {
 
-        if (!response.ok) {
-          throw new Error();
-        }
+  return menu.filter(
+    item =>
+      cats.includes(
+        item.categoria
+      ) &&
+      item.disponivelhx
+  );
 
-        const data = await response.json();
+}
 
-        // Raio-X: Vamos ver o que realmente veio do servidor!
-        console.log("Resposta da Vercel:", data);
+/* RELÓGIO */
 
-        // CORREÇÃO SEGURA: Se o servidor devolver um objeto com a chave 'itens', usa-a. Se devolver a lista direta, usa a lista.
-        let rawMenu = Array.isArray(data) ? data : (data.itens || data.items || []);
+function updateClock() {
 
-        // CORREÇÃO: Cria IDs falsos se vierem nulos e define disponibilidade como verdadeira
-        menu = rawMenu.map((item, index) => ({
-          ...item,
-          id: item.id ? item.id : `produto-ref-${index}`,
-          disponivel: true
-        }));
+  const d =
+    new Date();
 
-        basePrice = Number(data.basePrice) || 20;
-        deliveryPrice = Number(data.deliveryPrice) || 5;
 
-      } catch {
-        console.warn('Não foi possível carregar o cardápio.');
-        menu = [];
+  $('datetime').textContent =
+    d.toLocaleString(
+      'pt-BR',
+      {
+        timeZone: 'America/Recife',
+        dateStyle: 'short',
+        timeStyle: 'medium'
       }
+    ); HTMLDListElement
 
-      renderMenu();
+}
+
+
+setInterval(
+  updateClock,
+  1000
+);
+
+updateClock();
+
+
+/* CARREGAR CARDÁPIO */
+async function loadMenu() {
+  try {
+    const response = await fetch(
+      '/api/menu',
+      { cache: 'no-store' }
+    );
+
+    if (!response.ok) {
+      throw new Error();
     }
 
+    const data = await response.json();
+
+    // Raio-X: Vamos ver o que realmente veio do servidor!
+    console.log("Resposta da Vercel:", data);
+
+    // CORREÇÃO SEGURA: Se o servidor devolver um objeto com a chave 'itens', usa-a. Se devolver a lista direta, usa a lista.
+    let rawMenu = Array.isArray(data) ? data : (data.itens || data.items || []);
+
+    // CORREÇÃO: Cria IDs falsos se vierem nulos e define disponibilidade como verdadeira
+    menu = rawMenu.map((item, index) => ({
+      ...item,
+      id: item.id ? item.id : `produto-ref-${index}`,
+      disponivel: true
+    }));
+
+    basePrice = Number(data.basePrice) || 20;
+    deliveryPrice = Number(data.deliveryPrice) || 5;
+
+  } catch {
+    console.warn('Não foi possível carregar o cardápio.');
+    menu = [];
+  }
+
+  renderMenu();
+}
 
 
-    /* RENDERIZAÇÃO DO CARDÁPIO */
 
-    function section(
-      title,
-      cats,
-      accent,
-      hidePrice
-    ) {
+/* RENDERIZAÇÃO DO CARDÁPIO */
 
-      const all =
-        menu.filter(
-          x =>
-            cats.includes(
-              x.categoria
-            )
-        );
+function section(
+  title,
+  cats,
+  accent,
+  hidePrice
+) {
+
+  const all =
+    menu.filter(
+      x =>
+        cats.includes(
+          x.categoria
+        )
+    );
 
 
-      return `
+  return `
 
     <section class="section">
 
@@ -167,14 +163,14 @@ let menu = [];
             </strong>
 
             ${!hidePrice
-          ? `<span>${money(x.preco)}</span>`
-          : ''
-        }
+      ? `<span>${money(x.preco)}</span>`
+      : ''
+    }
 
             ${x.disponivel
-          ? ''
-          : '<span class="badge">Indisponível hoje</span>'
-        }
+      ? ''
+      : '<span class="badge">Indisponível hoje</span>'
+    }
 
           </div>
 
@@ -186,210 +182,210 @@ let menu = [];
 
   `;
 
-    }
+}
 
 
-    function renderMenu() {
-      $('menu').innerHTML =
-        section(
-          'Guarnições',
-          ['Guarnições'], // Lê o nome exato do banco de dados
-          'accent-guarnicoes',
-          true
-        )
-        +
-        section(
-          'Proteínas',
-          ['Proteínas'], // Lê o nome exato do banco de dados
-          'accent-proteinas',
-          true
-        )
-        +
-        section(
-          'Bebidas e Sucos',
-          ['Gaseificadas', 'Sucos Naturais 350ml', 'Polpas 500ml'], // <--- Os nomes exatos que estão gravados na base de dados
-          'accent-bebidas',
-          true
-        )
-        +
-        section(
-          'Sobremesas',
-          ['Sobremesas'], // Lê o nome exato do banco de dados
-          'accent-sobremesas',
-          true
-        );
-    }
+function renderMenu() {
+  $('menu').innerHTML =
+    section(
+      'Guarnições',
+      ['Guarnições'], // Lê o nome exato do banco de dados
+      'accent-guarnicoes',
+      true
+    )
+    +
+    section(
+      'Proteínas',
+      ['Proteínas'], // Lê o nome exato do banco de dados
+      'accent-proteinas',
+      true
+    )
+    +
+    section(
+      'Bebidas e Sucos',
+      ['Gaseificadas', 'Sucos Naturais 350ml', 'Polpas 500ml'], // <--- Os nomes exatos que estão gravados na base de dados
+      'accent-bebidas',
+      true
+    )
+    +
+    section(
+      'Sobremesas',
+      ['Sobremesas'], // Lê o nome exato do banco de dados
+      'accent-sobremesas',
+      true
+    );
+}
 
 
-    /* MODAIS */
+/* MODAIS */
 
-    function openOverlay(id) {
+function openOverlay(id) {
 
+  $(id)
+    .classList
+    .remove('hidden');
+
+}
+
+
+function closeOverlay(id) {
+
+  $(id)
+    .classList
+    .add('hidden');
+
+}
+
+
+function setStep(n) {
+
+  [
+    'orderStep1',
+    'orderStep2',
+    'orderStep3'
+  ].forEach(
+    (id, i) =>
       $(id)
         .classList
-        .remove('hidden');
-
-    }
-
-
-    function closeOverlay(id) {
-
-      $(id)
-        .classList
-        .add('hidden');
-
-    }
-
-
-    function setStep(n) {
-
-      [
-        'orderStep1',
-        'orderStep2',
-        'orderStep3'
-      ].forEach(
-        (id, i) =>
-          $(id)
-            .classList
-            .toggle(
-              'active',
-              i === n - 1
-            )
-      );
-
-    }
-
-
-    function showErr(
-      id,
-      msg
-    ) {
-
-      $(id).textContent =
-        msg;
-
-      $(id)
-        .classList
-        .remove('hidden');
-
-    }
-
-
-    function clearErr(id) {
-
-      $(id)
-        .classList
-        .add('hidden');
-
-    }
-
-
-    /* MÁSCARA TELEFONE */
-
-    function maskPhone(v) {
-
-      let d =
-        v
-          .replace(/\D/g, '')
-          .slice(0, 11);
-
-
-      if (d.length <= 10) {
-
-        return d
-          .replace(
-            /(\d{2})(\d{4})(\d{0,4})/,
-            '($1) $2-$3'
-          )
-          .replace(/-$/, '');
-
-      }
-
-
-      return d
-        .replace(
-          /(\d{2})(\d{5})(\d{0,4})/,
-          '($1) $2-$3'
+        .toggle(
+          'active',
+          i === n - 1
         )
-        .replace(/-$/, '');
+  );
 
-    }
-
-
-    $('customerPhone')
-      .addEventListener(
-        'input',
-        e =>
-          e.target.value =
-          maskPhone(
-            e.target.value
-          )
-      );
+}
 
 
-    /* ABRIR PEDIDO */
+function showErr(
+  id,
+  msg
+) {
 
-    /* ABRIR PEDIDO */
-    $('openOrder').onclick = () => {
-      orderState = null;
-      openOverlay('orderOverlay'); // Certifique-se de usar openOverlay (com 'p')
-      setStep(1);
-    };
+  $(id).textContent =
+    msg;
 
+  $(id)
+    .classList
+    .remove('hidden');
 
-    $('closeOrder1').onclick =
-      () =>
-        closeOverlay(
-          'orderOverlay'
-        );
+}
 
 
-    $('backStep1').onclick =
-      () =>
-        setStep(1);
+function clearErr(id) {
+
+  $(id)
+    .classList
+    .add('hidden');
+
+}
 
 
-    $('cancelFinal').onclick =
-      () => {
+/* MÁSCARA TELEFONE */
 
-        closeOverlay(
-          'orderOverlay'
-        );
+function maskPhone(v) {
 
-        resetOrder();
-
-      };
+  let d =
+    v
+      .replace(/\D/g, '')
+      .slice(0, 11);
 
 
-    /* CRIAR MARMITAS */
+  if (d.length <= 10) {
 
-    function makeMarmitas(n) {
+    return d
+      .replace(
+        /(\d{2})(\d{4})(\d{0,4})/,
+        '($1) $2-$3'
+      )
+      .replace(/-$/, '');
 
-      return Array.from(
-        {
-          length: n
-        },
-        () => ({
-          guarnicoes: [],
-          proteinas: [],
-          bebidas: {},
-          sobremesas: {},
-          observacao: ''
-        })
-      );
-
-    }
+  }
 
 
-    /* =========================================================
-       HTML DE UMA MARMITA
-       ========================================================= */
+  return d
+    .replace(
+      /(\d{2})(\d{5})(\d{0,4})/,
+      '($1) $2-$3'
+    )
+    .replace(/-$/, '');
 
-    function choiceHTML(m, i) {
-      const g = available(['Guarnições']);
-      const p = available(['Proteínas']);
+}
 
-      return `
+
+$('customerPhone')
+  .addEventListener(
+    'input',
+    e =>
+      e.target.value =
+      maskPhone(
+        e.target.value
+      )
+  );
+
+
+/* ABRIR PEDIDO */
+
+/* ABRIR PEDIDO */
+$('openOrder').onclick = () => {
+  orderState = null;
+  openOverlay('orderOverlay'); // Certifique-se de usar openOverlay (com 'p')
+  setStep(1);
+};
+
+
+$('closeOrder1').onclick =
+  () =>
+    closeOverlay(
+      'orderOverlay'
+    );
+
+
+$('backStep1').onclick =
+  () =>
+    setStep(1);
+
+
+$('cancelFinal').onclick =
+  () => {
+
+    closeOverlay(
+      'orderOverlay'
+    );
+
+    resetOrder();
+
+  };
+
+
+/* CRIAR MARMITAS */
+
+function makeMarmitas(n) {
+
+  return Array.from(
+    {
+      length: n
+    },
+    () => ({
+      guarnicoes: [],
+      proteinas: [],
+      bebidas: {},
+      sobremesas: {},
+      observacao: ''
+    })
+  );
+
+}
+
+
+/* =========================================================
+   HTML DE UMA MARMITA
+   ========================================================= */
+
+function choiceHTML(m, i) {
+  const g = available(['Guarnições']);
+  const p = available(['Proteínas']);
+
+  return `
         <div class="marmita">
           <h3>
             Marmita ${String(i + 1).padStart(2, '0')}
@@ -437,18 +433,18 @@ let menu = [];
           </div>
 
           ${qtySection(
-        'Bebidas',
-        ['Gaseificadas', 'Sucos Naturais 350ml', 'Polpas 500ml'],
-        i,
-        'bebidas'
-      )}
+    'Bebidas',
+    ['Gaseificadas', 'Sucos Naturais 350ml', 'Polpas 500ml'],
+    i,
+    'bebidas'
+  )}
 
           ${qtySection(
-        'Sobremesas',
-        ['Sobremesas'],
-        i,
-        'sobremesas'
-      )}
+    'Sobremesas',
+    ['Sobremesas'],
+    i,
+    'sobremesas'
+  )}
 
           <div class="field">
             <label>
@@ -463,28 +459,28 @@ let menu = [];
           </div>
         </div>
       `;
-    }
+}
 
 
-    /*
-      CONTROLES DE QUANTIDADE.
-    
-      O + e o - ficam obrigatoriamente
-      na mesma linha.
-    */
+/*
+  CONTROLES DE QUANTIDADE.
+ 
+  O + e o - ficam obrigatoriamente
+  na mesma linha.
+*/
 
-    function qtySection(
-      title,
-      cats,
-      i,
-      key
-    ) {
+function qtySection(
+  title,
+  cats,
+  i,
+  key
+) {
 
-      const items =
-        available(cats);
+  const items =
+    available(cats);
 
 
-      return `
+  return `
 
     <div class="choice-group">
 
@@ -498,8 +494,8 @@ let menu = [];
         Use 0 para:
         Não quero
         ${key === 'bebidas'
-          ? 'bebida'
-          : 'sobremesa'}.
+      ? 'bebida'
+      : 'sobremesa'}.
 
       </div>
 
@@ -561,710 +557,710 @@ let menu = [];
 
   `;
 
-    }
+}
 
 
-    /* =========================================================
-       RENDERIZAR MARMITAS
-       ========================================================= */
+/* =========================================================
+   RENDERIZAR MARMITAS
+   ========================================================= */
 
-    function renderMarmitas() {
-      const container = $('marmitas');
-      if (!container) return;
+function renderMarmitas() {
+  const container = $('marmitas');
+  if (!container) return;
 
-      container.innerHTML = orderState.marmitas
-        .map(choiceHTML)
-        .join('');
+  container.innerHTML = orderState.marmitas
+    .map(choiceHTML)
+    .join('');
 
-      syncFormToState();
-    }
+  syncFormToState();
+}
 
 
-    /* =========================================================
-       SINCRONIZAR FORMULÁRIO PARA O ESTADO (CORRIGIDO)
-       ========================================================= */
+/* =========================================================
+   SINCRONIZAR FORMULÁRIO PARA O ESTADO (CORRIGIDO)
+   ========================================================= */
 
-    function syncFormToState() {
-      // 1. Lê os checkboxes de guarnições e proteínas marcados no HTML e atualiza o orderState
-      document
-        .querySelectorAll('#marmitas input[data-kind]')
-        .forEach(el => {
-          const i = Number(el.dataset.index);
-          const key = el.dataset.kind === 'g' ? 'guarnicoes' : 'proteinas';
-          const id = el.dataset.id;
+function syncFormToState() {
+  // 1. Lê os checkboxes de guarnições e proteínas marcados no HTML e atualiza o orderState
+  document
+    .querySelectorAll('#marmitas input[data-kind]')
+    .forEach(el => {
+      const i = Number(el.dataset.index);
+      const key = el.dataset.kind === 'g' ? 'guarnicoes' : 'proteinas';
+      const id = el.dataset.id;
 
-          // Garante que o array existe na marmita
-          if (!orderState.marmitas[i][key]) {
-            orderState.marmitas[i][key] = [];
-          }
+      // Garante que o array existe na marmita
+      if (!orderState.marmitas[i][key]) {
+        orderState.marmitas[i][key] = [];
+      }
 
-          const indexInState = orderState.marmitas[i][key].indexOf(id);
+      const indexInState = orderState.marmitas[i][key].indexOf(id);
 
-          if (el.checked && indexInState === -1) {
-            orderState.marmitas[i][key].push(id);
-          } else if (!el.checked && indexInState !== -1) {
-            orderState.marmitas[i][key].splice(indexInState, 1);
-          }
-        });
+      if (el.checked && indexInState === -1) {
+        orderState.marmitas[i][key].push(id);
+      } else if (!el.checked && indexInState !== -1) {
+        orderState.marmitas[i][key].splice(indexInState, 1);
+      }
+    });
 
-      // 2. Lê as observações digitadas
-      document
-        .querySelectorAll('#marmitas textarea[data-obs]')
-        .forEach(el => {
-          const i = Number(el.dataset.obs);
-          if (orderState.marmitas[i]) {
-            orderState.marmitas[i].observacao = el.value;
-          }
-        });
-    }
+  // 2. Lê as observações digitadas
+  document
+    .querySelectorAll('#marmitas textarea[data-obs]')
+    .forEach(el => {
+      const i = Number(el.dataset.obs);
+      if (orderState.marmitas[i]) {
+        orderState.marmitas[i].observacao = el.value;
+      }
+    });
+}
 
 
-    /* CHECKBOXES */
+/* CHECKBOXES */
 
-    $('marmitas')
-      .addEventListener(
-        'change',
-        e => {
+$('marmitas')
+  .addEventListener(
+    'change',
+    e => {
 
-          const el =
-            e.target;
+      const el =
+        e.target;
 
 
-          if (
-            el.matches(
-              'input[data-kind]'
-            )
-          ) {
+      if (
+        el.matches(
+          'input[data-kind]'
+        )
+      ) {
 
-            const i =
-              Number(
-                el.dataset.index
-              );
-
-
-            const key =
-              el.dataset.kind === 'g'
-                ? 'guarnicoes'
-                : 'proteinas';
-
-
-            const arr =
-              orderState
-                .marmitas[i][key];
-
-
-            if (el.checked) {
-
-              if (
-                key === 'guarnicoes' &&
-                arr.length >= 4
-              ) {
-
-                el.checked =
-                  false;
-
-                return;
-
-              }
-
-
-              if (
-                !arr.includes(
-                  el.dataset.id
-                )
-              ) {
-
-                arr.push(
-                  el.dataset.id
-                );
-
-              }
-
-            } else {
-
-              orderState
-                .marmitas[i][key] =
-                arr.filter(
-                  x =>
-                    x !==
-                    el.dataset.id
-                );
-
-            }
-
-          }
-
-
-          if (
-            el.matches(
-              'textarea[data-obs]'
-            )
-          ) {
-
-            orderState
-              .marmitas[
-              Number(el.dataset.obs)
-            ]
-              .observacao =
-              el.value
-                .slice(0, 90);
-
-          }
-
-        }
-      );
-
-
-    /* BOTÕES + E - */
-
-    $('marmitas')
-      .addEventListener(
-        'click',
-        e => {
-
-          const button =
-            e.target.closest(
-              'button[data-qaction]'
-            );
-
-
-          if (!button) {
-            return;
-          }
-
-
-          const i =
-            Number(
-              button.dataset.index
-            );
-
-
-          const key =
-            button.dataset.key;
-
-
-          const id =
-            button.dataset.id;
-
-
-          const m =
-            orderState
-              .marmitas[i];
-
-
-          const old =
-            Number(
-              m[key][id] || 0
-            );
-
-
-          const next =
-            button.dataset.qaction === 'plus'
-              ? Math.min(
-                20,
-                old + 1
-              )
-              : Math.max(
-                0,
-                old - 1
-              );
-
-
-          if (next === 0) {
-
-            delete m[key][id];
-
-          } else {
-
-            m[key][id] =
-              next;
-
-          }
-
-
-          const display =
-            $(
-              `q-${key}-${i}-${id}`
-            );
-
-
-          if (display) {
-
-            display.textContent =
-              next;
-
-          }
-
-        }
-      );
-
-
-    /* PASSO 1 -> PASSO 2 */
-
-    $('toStep2').onclick =
-      () => {
-
-        clearErr(
-          'orderError1'
-        );
-
-
-        const name =
-          $('customerName')
-            .value
-            .trim();
-
-
-        const phone =
-          $('customerPhone')
-            .value
-            .replace(
-              /\D/g,
-              ''
-            );
-
-
-        const address =
-          $('customerAddress')
-            .value
-            .trim();
-
-
-        const n =
+        const i =
           Number(
-            $('mealCount')
-              .value
+            el.dataset.index
           );
 
 
-        if (name.length < 2) {
+        const key =
+          el.dataset.kind === 'g'
+            ? 'guarnicoes'
+            : 'proteinas';
 
-          return showErr(
-            'orderError1',
-            'Informe o nome completo.'
-          );
 
-        }
+        const arr =
+          orderState
+            .marmitas[i][key];
 
 
-        if (phone.length < 10) {
+        if (el.checked) {
 
-          return showErr(
-            'orderError1',
-            'Informe um telefone válido.'
-          );
+          if (
+            key === 'guarnicoes' &&
+            arr.length >= 4
+          ) {
 
-        }
+            el.checked =
+              false;
 
+            return;
 
-        if (address.length < 5) {
+          }
 
-          return showErr(
-            'orderError1',
-            'Informe o endereço.'
-          );
 
-        }
+          if (
+            !arr.includes(
+              el.dataset.id
+            )
+          ) {
 
+            arr.push(
+              el.dataset.id
+            );
 
-        if (
-          !Number.isInteger(n) ||
-          n < 1 ||
-          n > 20
-        ) {
+          }
 
-          return showErr(
-            'orderError1',
-            'Quantidade de marmitas inválida.'
-          );
-
-        }
-
-
-        orderState = {
-
-          nome: name,
-
-          telefone: phone,
-
-          address: address,
-
-          entrega:
-            document
-              .querySelector(
-                'input[name="delivery"]:checked'
-              )
-              .value === 'true',
-
-          marmitas:
-            makeMarmitas(n)
-
-        };
-
-
-        renderMarmitas();
-
-        setStep(2);
-
-      };
-
-
-    /* =====================================================
-   CALCULAR PEDIDO NO SERVIDOR (CORRIGIDO)
-   ===================================================== */
-
-    async function calculateOrder() {
-      clearErr('orderError2');
-
-      // 🔥 PASSO CRUCIAL: Sincroniza os cliques dos inputs do HTML para dentro do orderState antes de validar!
-      if (typeof syncFormToState === 'function') {
-        syncFormToState();
-      }
-
-      const invalid =
-        orderState.marmitas
-          .findIndex(
-            m =>
-              m.proteinas.length < 1 ||
-              m.proteinas.length > 2 ||
-              m.guarnicoes.length > 4
-          );
-
-      if (invalid >= 0) {
-        showErr(
-          'orderError2',
-          `Marmita ${invalid + 1}: escolha 1 ou 2 proteínas e no máximo 4 guarnições.`
-        );
-        return false;
-      }
-
-      const payload = {
-        nome: orderState.nome,
-        telefone: orderState.telefone,
-        endereco: orderState.address,
-        entrega: orderState.entrega,
-        marmitas: orderState.marmitas
-      };
-
-      const response = await fetch(
-        '/api/orders',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(payload)
-        }
-      );
-
-      const data = await response
-        .json()
-        .catch(() => ({}));
-
-      if (!response.ok) {
-        showErr(
-          'orderError2',
-          data.erro || 'Não foi possível calcular o pedido.'
-        );
-        return false;
-      }
-
-      calculatedOrder = data;
-      return true;
-    }
-
-
-    /* PASSO 2 -> PASSO 3 */
-
-    $('toStep3').onclick =
-      async (event) => {
-
-        event.preventDefault();
-
-        console.log('TESTE 1: clicou em Encerrar e seguir');
-
-        const ok =
-          await calculateOrder();
-
-        console.log('TESTE 2: calculateOrder terminou:', ok);
-
-        if (!ok) {
-          return;
-        }
-
-        console.log('TESTE 3: antes de setStep(3)');
-
-        $('orderSummary')
-          .textContent =
-          calculatedOrder
-            .mensagem;
-
-        $('finalTotal')
-          .textContent =
-          `Total: ${money(
-            calculatedOrder.total
-          )}`;
-
-        setStep(3);
-
-        console.log('TESTE 4: depois de setStep(3)');
-      };
-
-
-
-
-    /* WHATSAPP */
-    function sendWA(number) {
-      const text = encodeURIComponent(calculatedOrder.mensagem);
-
-      // 1. Obtém o número dinâmico do config.json
-      const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
-
-      // 2. Declara a variável cleanNumber que estava a faltar
-      const cleanNumber = String(waNumber).replace(/\D/g, '');
-
-      // 3. Abre o link no WhatsApp
-      window.open(
-        `https://wa.me/${cleanNumber}?text=${text}`,
-        '_blank',
-        'noopener'
-      );
-    }
-
-
-
-    /* RESTAURANTE */
-
-    /* ENVIAR PEDIDO AO RESTAURANTE (PROTEGIDO VIA BACKEND) */
-    $('sendRestaurant').onclick = async () => {
-      if (!calculatedOrder) return;
-
-      // 1. Lista de pratos que não exigem guarnições extras
-      const PRATOS_COMPLETOS = ['Arrumadinho de charque', 'Arrumadinho de carne de sol', 'Cozido', 'Feijoada', 'Yakisoba'];
-
-      // 2. Pega o texto do resumo exibido na tela
-      const summaryText = $('orderSummary').innerText;
-
-      // 3. Verifica se o resumo contém algum dos pratos completos
-      const temPratoCompleto = PRATOS_COMPLETOS.some(prato =>
-        summaryText.toLowerCase().includes(prato.toLowerCase())
-      );
-
-      // 4. Se não for um prato completo e faltar alguma seleção obrigatória
-      if (!temPratoCompleto && calculatedOrder.guarnicoesCount === 0) {
-        alert('Por favor, selecione as guarnições antes de enviar o pedido.');
-        return; // Interrompe o envio
-      }
-
-      try {
-        const response = await fetch('/api/create-whatsapp-link', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ orderSummary: summaryText })
-        });
-
-        if (!response.ok) {
-          throw new Error(`Erro do servidor: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data.url) {
-          window.open(data.url, '_blank');
-          closeOverlay('orderOverlay');
-          resetOrder();
         } else {
-          alert('Erro ao gerar o link para o WhatsApp.');
+
+          orderState
+            .marmitas[i][key] =
+            arr.filter(
+              x =>
+                x !==
+                el.dataset.id
+            );
+
         }
-      } catch (error) {
-        console.error('Erro na requisição:', error);
-        alert('Erro de conexão ao enviar o pedido.');
+
       }
+
+
+      if (
+        el.matches(
+          'textarea[data-obs]'
+        )
+      ) {
+
+        orderState
+          .marmitas[
+          Number(el.dataset.obs)
+        ]
+          .observacao =
+          el.value
+            .slice(0, 90);
+
+      }
+
+    }
+  );
+
+
+/* BOTÕES + E - */
+
+$('marmitas')
+  .addEventListener(
+    'click',
+    e => {
+
+      const button =
+        e.target.closest(
+          'button[data-qaction]'
+        );
+
+
+      if (!button) {
+        return;
+      }
+
+
+      const i =
+        Number(
+          button.dataset.index
+        );
+
+
+      const key =
+        button.dataset.key;
+
+
+      const id =
+        button.dataset.id;
+
+
+      const m =
+        orderState
+          .marmitas[i];
+
+
+      const old =
+        Number(
+          m[key][id] || 0
+        );
+
+
+      const next =
+        button.dataset.qaction === 'plus'
+          ? Math.min(
+            20,
+            old + 1
+          )
+          : Math.max(
+            0,
+            old - 1
+          );
+
+
+      if (next === 0) {
+
+        delete m[key][id];
+
+      } else {
+
+        m[key][id] =
+          next;
+
+      }
+
+
+      const display =
+        $(
+          `q-${key}-${i}-${id}`
+        );
+
+
+      if (display) {
+
+        display.textContent =
+          next;
+
+      }
+
+    }
+  );
+
+
+/* PASSO 1 -> PASSO 2 */
+
+$('toStep2').onclick =
+  () => {
+
+    clearErr(
+      'orderError1'
+    );
+
+
+    const name =
+      $('customerName')
+        .value
+        .trim();
+
+
+    const phone =
+      $('customerPhone')
+        .value
+        .replace(
+          /\D/g,
+          ''
+        );
+
+
+    const address =
+      $('customerAddress')
+        .value
+        .trim();
+
+
+    const n =
+      Number(
+        $('mealCount')
+          .value
+      );
+
+
+    if (name.length < 2) {
+
+      return showErr(
+        'orderError1',
+        'Informe o nome completo.'
+      );
+
+    }
+
+
+    if (phone.length < 10) {
+
+      return showErr(
+        'orderError1',
+        'Informe um telefone válido.'
+      );
+
+    }
+
+
+    if (address.length < 5) {
+
+      return showErr(
+        'orderError1',
+        'Informe o endereço.'
+      );
+
+    }
+
+
+    if (
+      !Number.isInteger(n) ||
+      n < 1 ||
+      n > 20
+    ) {
+
+      return showErr(
+        'orderError1',
+        'Quantidade de marmitas inválida.'
+      );
+
+    }
+
+
+    orderState = {
+
+      nome: name,
+
+      telefone: phone,
+
+      address: address,
+
+      entrega:
+        document
+          .querySelector(
+            'input[name="delivery"]:checked'
+          )
+          .value === 'true',
+
+      marmitas:
+        makeMarmitas(n)
+
     };
 
 
-    /* CÓPIA PARA CLIENTE */
+    renderMarmitas();
+
+    setStep(2);
+
+  };
+
+
+/* =====================================================
+CALCULAR PEDIDO NO SERVIDOR (CORRIGIDO)
+===================================================== */
+
+async function calculateOrder() {
+  clearErr('orderError2');
+
+  // 🔥 PASSO CRUCIAL: Sincroniza os cliques dos inputs do HTML para dentro do orderState antes de validar!
+  if (typeof syncFormToState === 'function') {
+    syncFormToState();
+  }
+
+  const invalid =
+    orderState.marmitas
+      .findIndex(
+        m =>
+          m.proteinas.length < 1 ||
+          m.proteinas.length > 2 ||
+          m.guarnicoes.length > 4
+      );
+
+  if (invalid >= 0) {
+    showErr(
+      'orderError2',
+      `Marmita ${invalid + 1}: escolha 1 ou 2 proteínas e no máximo 4 guarnições.`
+    );
+    return false;
+  }
+
+  const payload = {
+    nome: orderState.nome,
+    telefone: orderState.telefone,
+    endereco: orderState.address,
+    entrega: orderState.entrega,
+    marmitas: orderState.marmitas
+  };
+
+  const response = await fetch(
+    '/api/orders',
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    }
+  );
+
+  const data = await response
+    .json()
+    .catch(() => ({}));
+
+  if (!response.ok) {
+    showErr(
+      'orderError2',
+      data.erro || 'Não foi possível calcular o pedido.'
+    );
+    return false;
+  }
+
+  calculatedOrder = data;
+  return true;
+}
+
+
+/* PASSO 2 -> PASSO 3 */
+
+$('toStep3').onclick =
+  async (event) => {
+
+    event.preventDefault();
+
+    console.log('TESTE 1: clicou em Encerrar e seguir');
+
+    const ok =
+      await calculateOrder();
+
+    console.log('TESTE 2: calculateOrder terminou:', ok);
+
+    if (!ok) {
+      return;
+    }
+
+    console.log('TESTE 3: antes de setStep(3)');
+
+    $('orderSummary')
+      .textContent =
+      calculatedOrder
+        .mensagem;
+
+    $('finalTotal')
+      .textContent =
+      `Total: ${money(
+        calculatedOrder.total
+      )}`;
+
+    setStep(3);
+
+    console.log('TESTE 4: depois de setStep(3)');
+  };
 
 
 
-    /* RESET */
 
-    function resetOrder() {
+/* WHATSAPP */
+function sendWA(number) {
+  const text = encodeURIComponent(calculatedOrder.mensagem);
 
-      orderState =
-        null;
+  // 1. Obtém o número dinâmico do config.json
+  const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
 
-      calculatedOrder =
-        null;
+  // 2. Declara a variável cleanNumber que estava a faltar
+  const cleanNumber = String(waNumber).replace(/\D/g, '');
 
-
-      $('customerName')
-        .value = '';
-
-
-      $('customerPhone')
-        .value = '';
-
-
-      $('customerAddress')
-        .value = '';
+  // 3. Abre o link no WhatsApp
+  window.open(
+    `https://wa.me/${cleanNumber}?text=${text}`,
+    '_blank',
+    'noopener'
+  );
+}
 
 
-      $('mealCount')
-        .value = 1;
+
+/* RESTAURANTE */
+
+/* ENVIAR PEDIDO AO RESTAURANTE (PROTEGIDO VIA BACKEND) */
+$('sendRestaurant').onclick = async () => {
+  if (!calculatedOrder) return;
+
+  // 1. Lista de pratos que não exigem guarnições extras
+  const PRATOS_COMPLETOS = ['Arrumadinho de charque', 'Arrumadinho de carne de sol', 'Cozido', 'Feijoada', 'Yakisoba'];
+
+  // 2. Pega o texto do resumo exibido na tela
+  const summaryText = $('orderSummary').innerText;
+
+  // 3. Verifica se o resumo contém algum dos pratos completos
+  const temPratoCompleto = PRATOS_COMPLETOS.some(prato =>
+    summaryText.toLowerCase().includes(prato.toLowerCase())
+  );
+
+  // 4. Se não for um prato completo e faltar alguma seleção obrigatória
+  if (!temPratoCompleto && calculatedOrder.guarnicoesCount === 0) {
+    alert('Por favor, selecione as guarnições antes de enviar o pedido.');
+    return; // Interrompe o envio
+  }
+
+  try {
+    const response = await fetch('/api/create-whatsapp-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderSummary: summaryText })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro do servidor: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.url) {
+      window.open(data.url, '_blank');
+      closeOverlay('orderOverlay');
+      resetOrder();
+    } else {
+      alert('Erro ao gerar o link para o WhatsApp.');
+    }
+  } catch (error) {
+    console.error('Erro na requisição:', error);
+    alert('Erro de conexão ao enviar o pedido.');
+  }
+};
+
+
+/* CÓPIA PARA CLIENTE */
+
+
+
+/* RESET */
+
+function resetOrder() {
+
+  orderState =
+    null;
+
+  calculatedOrder =
+    null;
+
+
+  $('customerName')
+    .value = '';
+
+
+  $('customerPhone')
+    .value = '';
+
+
+  $('customerAddress')
+    .value = '';
+
+
+  $('mealCount')
+    .value = 1;
+
+}
+
+
+/* =====================================================
+   ADMIN
+   ===================================================== */
+
+$('openAdmin').onclick =
+  () => {
+
+    clearErr(
+      'adminError'
+    );
+
+
+    $('adminLogin')
+      .classList
+      .remove('hidden');
+
+
+    $('adminPanel')
+      .classList
+      .add('hidden');
+
+
+    $('adminPassword')
+      .value = '';
+
+
+    openOverlay(
+      'adminOverlay'
+    );
+
+  };
+
+
+$('closeAdminLogin').onclick =
+  () =>
+    closeOverlay(
+      'adminOverlay'
+    );
+
+
+/* LOGIN */
+
+$('adminLoginBtn').onclick =
+  async () => {
+
+    clearErr(
+      'adminError'
+    );
+
+
+    const response =
+      await fetch(
+        '/api/admin/login',
+        {
+
+          method: 'POST',
+
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
+
+          body:
+            JSON.stringify({
+
+              username:
+                $('adminUser')
+                  .value,
+
+              password:
+                $('adminPassword')
+                  .value
+
+            })
+
+        }
+      );
+
+
+    const data =
+      await response
+        .json()
+        .catch(
+          () => ({})
+        );
+
+
+    if (!response.ok) {
+
+      return showErr(
+        'adminError',
+        data.erro ||
+        'Falha no login.'
+      );
 
     }
 
 
-    /* =====================================================
-       ADMIN
-       ===================================================== */
-
-    $('openAdmin').onclick =
-      () => {
-
-        clearErr(
-          'adminError'
-        );
+    adminDraft =
+      menu.map(
+        x => ({
+          ...x
+        })
+      );
 
 
-        $('adminLogin')
-          .classList
-          .remove('hidden');
+    renderAdmin();
 
 
-        $('adminPanel')
-          .classList
-          .add('hidden');
+    $('adminLogin')
+      .classList
+      .add('hidden');
 
 
-        $('adminPassword')
-          .value = '';
+    $('adminPanel')
+      .classList
+      .remove('hidden');
+
+  };
 
 
-        openOverlay(
-          'adminOverlay'
-        );
+/* ADMIN */
 
-      };
-
-
-    $('closeAdminLogin').onclick =
-      () =>
-        closeOverlay(
-          'adminOverlay'
-        );
-
-
-    /* LOGIN */
-
-    $('adminLoginBtn').onclick =
-      async () => {
-
-        clearErr(
-          'adminError'
-        );
-
-
-        const response =
-          await fetch(
-            '/api/admin/login',
-            {
-
-              method: 'POST',
-
-              headers: {
-                'Content-Type':
-                  'application/json'
-              },
-
-              body:
-                JSON.stringify({
-
-                  username:
-                    $('adminUser')
-                      .value,
-
-                  password:
-                    $('adminPassword')
-                      .value
-
-                })
-
-            }
-          );
+function renderAdmin() {
+  const groups = [
+    [
+      'Guarnições',
+      ['Guarnições']
+    ],
+    [
+      'Proteínas',
+      ['Proteínas']
+    ],
+    [
+      'Bebidas e Sucos',
+      ['Bebidas e Sucos']
+    ],
+    [
+      'Sobremesas',
+      ['Sobremesas']
+    ]
+  ];
 
 
-        const data =
-          await response
-            .json()
-            .catch(
-              () => ({})
-            );
+  $('adminItems')
+    .innerHTML =
 
-
-        if (!response.ok) {
-
-          return showErr(
-            'adminError',
-            data.erro ||
-            'Falha no login.'
-          );
-
-        }
-
-
-        adminDraft =
-          menu.map(
-            x => ({
-              ...x
-            })
-          );
-
-
-        renderAdmin();
-
-
-        $('adminLogin')
-          .classList
-          .add('hidden');
-
-
-        $('adminPanel')
-          .classList
-          .remove('hidden');
-
-      };
-
-
-    /* ADMIN */
-
-    function renderAdmin() {
-      const groups = [
-        [
-          'Guarnições',
-          ['Guarnições']
-        ],
-        [
-          'Proteínas',
-          ['Proteínas']
-        ],
-        [
-          'Bebidas e Sucos',
-          ['Bebidas e Sucos']
-        ],
-        [
-          'Sobremesas',
-          ['Sobremesas']
-        ]
-      ];
-
-
-      $('adminItems')
-        .innerHTML =
-
-        groups.map(
-          ([title, cats]) => `
+    groups.map(
+      ([title, cats]) => `
 
           <div class="admin-section">
 
@@ -1273,14 +1269,14 @@ let menu = [];
             </h3>
 
             ${adminDraft
-              .filter(
-                x =>
-                  cats.includes(
-                    x.categoria
-                  )
+          .filter(
+            x =>
+              cats.includes(
+                x.categoria
               )
-              .map(
-                x => `
+          )
+          .map(
+            x => `
 
                     <div class="admin-item">
 
@@ -1295,9 +1291,9 @@ let menu = [];
                           type="checkbox"
                           data-admin-id="${x.id}"
                           ${x.disponivel
-                    ? 'checked'
-                    : ''
-                  }
+                ? 'checked'
+                : ''
+              }
                         >
 
                         <span class="slider"></span>
@@ -1307,220 +1303,220 @@ let menu = [];
                     </div>
 
                   `
-              )
-              .join('')
-            }
+          )
+          .join('')
+        }
 
           </div>
 
         `
-        )
-          .join('');
+    )
+      .join('');
+
+}
+
+
+/* ALTERAR SWITCH */
+
+$('adminItems')
+  .addEventListener(
+    'change',
+    e => {
+
+      const id =
+        e.target
+          .dataset
+          .adminId;
+
+
+      if (!id) {
+        return;
+      }
+
+
+      const item =
+        adminDraft.find(
+          i => String(i.id) === String(id));
+
+
+      if (item) {
+
+        item.disponivel =
+          e.target.checked;
+
+      }
 
     }
+  );
 
 
-    /* ALTERAR SWITCH */
+/* SALVAR */
 
-    $('adminItems')
-      .addEventListener(
-        'change',
-        e => {
+$('adminSave').onclick =
+  async () => {
 
-          const id =
-            e.target
-              .dataset
-              .adminId;
+    const response =
+      await fetch(
+        '/api/admin/menu',
+        {
 
+          method: 'PUT',
 
-          if (!id) {
-            return;
-          }
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
 
+          body:
+            JSON.stringify({
 
-          const item =
-            adminDraft.find(
-              i => String(i.id) === String(id));
+              changes:
+                adminDraft.map(
+                  x => ({
+                    id: x.id,
+                    disponivel:
+                      x.disponivel
+                  })
+                )
 
-
-          if (item) {
-
-            item.disponivel =
-              e.target.checked;
-
-          }
+            })
 
         }
       );
 
 
-    /* SALVAR */
-
-    $('adminSave').onclick =
-      async () => {
-
-        const response =
-          await fetch(
-            '/api/admin/menu',
-            {
-
-              method: 'PUT',
-
-              headers: {
-                'Content-Type':
-                  'application/json'
-              },
-
-              body:
-                JSON.stringify({
-
-                  changes:
-                    adminDraft.map(
-                      x => ({
-                        id: x.id,
-                        disponivel:
-                          x.disponivel
-                      })
-                    )
-
-                })
-
-            }
-          );
-
-
-        const data =
-          await response
-            .json()
-            .catch(
-              () => ({})
-            );
-
-
-        if (!response.ok) {
-
-          if (
-            response.status === 401
-          ) {
-
-            showErr(
-              'adminError',
-              'Sua sessão expirou. Faça login novamente.'
-            );
-
-
-            $('adminLogin')
-              .classList
-              .remove('hidden');
-
-
-            $('adminPanel')
-              .classList
-              .add('hidden');
-
-          } else {
-
-            showErr(
-              'adminError',
-              data.erro ||
-              'Não foi possível salvar.'
-            );
-
-          }
-
-
-          return;
-
-        }
-
-        menu =
-          adminDraft.map(
-            x => ({ ...x })
-          );
-
-
-        renderMenu();
-
-
-        alert(
-          'Alterações salvas.'
+    const data =
+      await response
+        .json()
+        .catch(
+          () => ({})
         );
 
 
-        closeOverlay(
-          'adminOverlay'
-        );
+    if (!response.ok) {
 
-      };
+      if (
+        response.status === 401
+      ) {
 
-
-    /* LOGOUT */
-
-    $('adminClose').onclick =
-      async () => {
-
-        await fetch(
-          '/api/admin/logout',
-          {
-            method: 'POST'
-          }
-        ).catch(
-          () => { }
+        showErr(
+          'adminError',
+          'Sua sessão expirou. Faça login novamente.'
         );
 
 
-        closeOverlay(
-          'adminOverlay'
+        $('adminLogin')
+          .classList
+          .remove('hidden');
+
+
+        $('adminPanel')
+          .classList
+          .add('hidden');
+
+      } else {
+
+        showErr(
+          'adminError',
+          data.erro ||
+          'Não foi possível salvar.'
         );
 
-      };
+      }
+
+
+      return;
+
+    }
+
+    menu =
+      adminDraft.map(
+        x => ({ ...x })
+      );
+
+
+    renderMenu();
+
+
+    alert(
+      'Alterações salvas.'
+    );
+
 
     closeOverlay(
       'adminOverlay'
     );
 
-    /* WHATSAPP */
-    function sendWA(number) {
-      const text = encodeURIComponent(calculatedOrder.mensagem);
+  };
 
-      // Pega o número dinâmico do config.json
-      const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
 
-      // Limpa para deixar apenas números
-      const cleanNumber = String(waNumber).replace(/\D/g, '');
+/* LOGOUT */
 
-      window.open(
-        `https://wa.me/${cleanNumber}?text=${text}`,
-        '_blank',
-        'noopener'
-      );
-    }
+$('adminClose').onclick =
+  async () => {
 
-    /* CONFIGURAÇÃO DINÂMICA DO RESTAURANTE */
-    let restauranteConfig = {};
+    await fetch(
+      '/api/admin/logout',
+      {
+        method: 'POST'
+      }
+    ).catch(
+      () => { }
+    );
 
-    async function carregarConfiguracoes() {
-      try {
-        // 👇 AQUI: Trocamos o link completo pelo caminho relativo!
-        const resposta = await fetch('/api/config');
-        if (resposta.ok) {
-          restauranteConfig = await resposta.json();
-          console.log('Configurações carregadas com sucesso:', restauranteConfig);
 
-          // Se tiver um elemento com a ID 'nome-restaurante' no seu HTML
-          const elementoNome = document.getElementById('nome-restaurante');
-          if (elementoNome && restauranteConfig.nomeRestaurante) {
-            elementoNome.textContent = restauranteConfig.nomeRestaurante;
-          }
+    closeOverlay(
+      'adminOverlay'
+    );
 
-          // Atualiza o botão flutuante do WhatsApp
-          const linkWa = document.getElementById('wa-float-link');
-          if (linkWa && restauranteConfig.whatsapp) {
-            const numeroLimpo = String(restauranteConfig.whatsapp).replace(/\D/g, '');
-            linkWa.href = `https://wa.me/${numeroLimpo}`;
-          }
-        }
-      } catch (erro) {
-        console.error('Erro ao buscar /api/config:', erro);
+  };
+
+closeOverlay(
+  'adminOverlay'
+);
+
+/* WHATSAPP */
+function sendWA(number) {
+  const text = encodeURIComponent(calculatedOrder.mensagem);
+
+  // Pega o número dinâmico do config.json
+  const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
+
+  // Limpa para deixar apenas números
+  const cleanNumber = String(waNumber).replace(/\D/g, '');
+
+  window.open(
+    `https://wa.me/${cleanNumber}?text=${text}`,
+    '_blank',
+    'noopener'
+  );
+}
+
+/* CONFIGURAÇÃO DINÂMICA DO RESTAURANTE */
+let restauranteConfig = {};
+
+async function carregarConfiguracoes() {
+  try {
+    // 👇 AQUI: Trocamos o link completo pelo caminho relativo!
+    const resposta = await fetch('/api/config');
+    if (resposta.ok) {
+      restauranteConfig = await resposta.json();
+      console.log('Configurações carregadas com sucesso:', restauranteConfig);
+
+      // Se tiver um elemento com a ID 'nome-restaurante' no seu HTML
+      const elementoNome = document.getElementById('nome-restaurante');
+      if (elementoNome && restauranteConfig.nomeRestaurante) {
+        elementoNome.textContent = restauranteConfig.nomeRestaurante;
+      }
+
+      // Atualiza o botão flutuante do WhatsApp
+      const linkWa = document.getElementById('wa-float-link');
+      if (linkWa && restauranteConfig.whatsapp) {
+        const numeroLimpo = String(restauranteConfig.whatsapp).replace(/\D/g, '');
+        linkWa.href = `https://wa.me/${numeroLimpo}`;
       }
     }
+  } catch (erro) {
+    console.error('Erro ao buscar /api/config:', erro);
+  }
+}
