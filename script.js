@@ -1028,271 +1028,254 @@ async function calculateOrder() {
       console.log('TESTE 4: depois de setStep(3)');
     };
   }
-  
-    // 3. Avança para o passo 3 (resumo e envio ao WhatsApp)
-    if (typeof setStep === 'function') {
-      setStep(3);
-    } else {
-      console.error('Erro: A função setStep não está definida no script.');
+
+  // 3. Avança para o passo 3 (resumo e envio ao WhatsApp)
+  if (typeof setStep === 'function') {
+    setStep(3);
+  } else {
+    console.error('Erro: A função setStep não está definida no script.');
+  }
+
+  console.log('TESTE 4: depois de setStep(3)');
+};
+
+
+
+/* WHATSAPP */
+function sendWA(number) {
+  const text = encodeURIComponent(calculatedOrder.mensagem);
+
+  // 1. Obtém o número dinâmico do config.json
+  const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
+
+  // 2. Declara a variável cleanNumber que estava a faltar
+  const cleanNumber = String(waNumber).replace(/\D/g, '');
+
+  // 3. Abre o link no WhatsApp
+  window.open(
+    `https://wa.me/${cleanNumber}?text=${text}`,
+    '_blank',
+    'noopener'
+  );
+}
+
+
+
+/* RESTAURANTE */
+
+/* =====================================================
+ENVIAR PEDIDO AO RESTAURANTE (DIRETO NO FRONTEND)
+===================================================== */
+$('sendRestaurant').onclick = () => {
+  if (!calculatedOrder) return;
+
+  // 1. Lista de pratos que não exigem guarnições extras
+  const PRATOS_COMPLETOS = ['Arrumadinho de charque', 'Arrumadinho de carne de sol', 'Cozido', 'Feijoada', 'Yakisoba'];
+
+  // 2. Pega o texto do resumo exibido na tela ou do calculatedOrder
+  const summaryText = $('orderSummary')?.innerText || calculatedOrder?.mensagem || 'Olá, gostaria de confirmar meu pedido de marmita!';
+
+  // 3. Verifica se o resumo contém algum dos pratos completos
+  const temPratoCompleto = PRATOS_COMPLETOS.some(prato =>
+    summaryText.toLowerCase().includes(prato.toLowerCase())
+  );
+
+  // 4. Se não for um prato completo e faltar alguma seleção obrigatória
+  if (!temPratoCompleto && calculatedOrder.guarnicoesCount === 0) {
+    alert('Por favor, selecione as guarnições antes de enviar o pedido.');
+    return; // Interrompe o envio
+  }
+
+  try {
+    // Número do WhatsApp do restaurante com DDD
+    const numeroWhatsApp = '5581920036280';
+
+    // Cria o link oficial do WhatsApp com a mensagem codificada
+    const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(summaryText)}`;
+
+    // Abre o WhatsApp numa nova aba
+    window.open(urlWhatsApp, '_blank');
+
+    // Fecha o modal e limpa o pedido após enviar
+    if (typeof closeOverlay === 'function') {
+      closeOverlay('orderOverlay');
+    }
+    if (typeof resetOrder === 'function') {
+      resetOrder();
     }
 
-    console.log('TESTE 4: depois de setStep(3)');
+  } catch (error) {
+    console.error('Erro ao abrir o WhatsApp:', error);
+    alert('Erro ao gerar o link para o WhatsApp.');
+  }
+};
+
+
+/* CÓPIA PARA CLIENTE */
+
+
+
+/* RESET */
+
+function resetOrder() {
+
+  orderState =
+    null;
+
+  calculatedOrder =
+    null;
+
+
+  $('customerName')
+    .value = '';
+
+
+  $('customerPhone')
+    .value = '';
+
+
+  $('customerAddress')
+    .value = '';
+
+
+  $('mealCount')
+    .value = 1;
+
+}
+
+
+/* =====================================================
+   ADMIN
+   ===================================================== */
+
+$('openAdmin').onclick =
+  () => {
+
+    clearErr(
+      'adminError'
+    );
+
+
+    $('adminLogin')
+      .classList
+      .remove('hidden');
+
+
+    $('adminPanel')
+      .classList
+      .add('hidden');
+
+
+    $('adminPassword')
+      .value = '';
+
+
+    openOverlay(
+      'adminOverlay'
+    );
+
   };
 
 
-
-  /* WHATSAPP */
-  function sendWA(number) {
-    const text = encodeURIComponent(calculatedOrder.mensagem);
-
-    // 1. Obtém o número dinâmico do config.json
-    const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
-
-    // 2. Declara a variável cleanNumber que estava a faltar
-    const cleanNumber = String(waNumber).replace(/\D/g, '');
-
-    // 3. Abre o link no WhatsApp
-    window.open(
-      `https://wa.me/${cleanNumber}?text=${text}`,
-      '_blank',
-      'noopener'
-    );
-  }
-
-
-
-  /* RESTAURANTE */
-
-  /* =====================================================
-  ENVIAR PEDIDO AO RESTAURANTE (DIRETO NO FRONTEND)
-  ===================================================== */
-  $('sendRestaurant').onclick = () => {
-    if (!calculatedOrder) return;
-
-    // 1. Lista de pratos que não exigem guarnições extras
-    const PRATOS_COMPLETOS = ['Arrumadinho de charque', 'Arrumadinho de carne de sol', 'Cozido', 'Feijoada', 'Yakisoba'];
-
-    // 2. Pega o texto do resumo exibido na tela ou do calculatedOrder
-    const summaryText = $('orderSummary')?.innerText || calculatedOrder?.mensagem || 'Olá, gostaria de confirmar meu pedido de marmita!';
-
-    // 3. Verifica se o resumo contém algum dos pratos completos
-    const temPratoCompleto = PRATOS_COMPLETOS.some(prato =>
-      summaryText.toLowerCase().includes(prato.toLowerCase())
+$('closeAdminLogin').onclick =
+  () =>
+    closeOverlay(
+      'adminOverlay'
     );
 
-    // 4. Se não for um prato completo e faltar alguma seleção obrigatória
-    if (!temPratoCompleto && calculatedOrder.guarnicoesCount === 0) {
-      alert('Por favor, selecione as guarnições antes de enviar o pedido.');
-      return; // Interrompe o envio
+
+/* LOGIN */
+
+$('adminLoginBtn').onclick =
+  async () => {
+
+    clearErr(
+      'adminError'
+    );
+
+
+    const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        username: $('adminUser').value,
+        password: $('adminPassword').value
+      })
+    });
+
+
+    const data =
+      await response
+        .json()
+        .catch(
+          () => ({})
+        );
+
+
+    if (!response.ok) {
+
+      return showErr(
+        'adminError',
+        data.erro ||
+        'Falha no login.'
+      );
+
     }
 
-    try {
-      // Número do WhatsApp do restaurante com DDD
-      const numeroWhatsApp = '5581920036280';
 
-      // Cria o link oficial do WhatsApp com a mensagem codificada
-      const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(summaryText)}`;
+    adminDraft =
+      menu.map(
+        x => ({
+          ...x
+        })
+      );
 
-      // Abre o WhatsApp numa nova aba
-      window.open(urlWhatsApp, '_blank');
 
-      // Fecha o modal e limpa o pedido após enviar
-      if (typeof closeOverlay === 'function') {
-        closeOverlay('orderOverlay');
-      }
-      if (typeof resetOrder === 'function') {
-        resetOrder();
-      }
+    renderAdmin();
 
-    } catch (error) {
-      console.error('Erro ao abrir o WhatsApp:', error);
-      alert('Erro ao gerar o link para o WhatsApp.');
-    }
+
+    $('adminLogin')
+      .classList
+      .add('hidden');
+
+
+    $('adminPanel')
+      .classList
+      .remove('hidden');
+
   };
 
 
-  /* CÓPIA PARA CLIENTE */
-
-
-
-  /* RESET */
-
-  function resetOrder() {
-
-    orderState =
-      null;
-
-    calculatedOrder =
-      null;
-
-
-    $('customerName')
-      .value = '';
-
-
-    $('customerPhone')
-      .value = '';
-
-
-    $('customerAddress')
-      .value = '';
-
-
-    $('mealCount')
-      .value = 1;
-
-  }
-
-
-  /* =====================================================
-     ADMIN
-     ===================================================== */
-
-  $('openAdmin').onclick =
-    () => {
-
-      clearErr(
-        'adminError'
-      );
-
-
-      $('adminLogin')
-        .classList
-        .remove('hidden');
-
-
-      $('adminPanel')
-        .classList
-        .add('hidden');
-
-
-      $('adminPassword')
-        .value = '';
-
-
-      openOverlay(
-        'adminOverlay'
-      );
-
-    };
-
-
-  $('closeAdminLogin').onclick =
-    () =>
-      closeOverlay(
-        'adminOverlay'
-      );
-
-
-  /* LOGIN */
-
-  $('adminLoginBtn').onclick =
-    async () => {
-
-      clearErr(
-        'adminError'
-      );
-
-
-      const response =
-        await fetch(
-          '/api/admin/login',
-          {
-
-            method: 'POST',
-
-            headers: {
-              'Content-Type':
-                'application/json'
-            },
-
-            body:
-              JSON.stringify({
-
-                username:
-                  $('adminUser')
-                    .value,
-
-                password:
-                  $('adminPassword')
-                    .value
-
-              })
-
-          }
-        );
-
-
-      const data =
-        await response
-          .json()
-          .catch(
-            () => ({})
-          );
-
-
-      if (!response.ok) {
-
-        return showErr(
-          'adminError',
-          data.erro ||
-          'Falha no login.'
-        );
-
-      }
-
-
-      adminDraft =
-        menu.map(
-          x => ({
-            ...x
-          })
-        );
-
-
-      renderAdmin();
-
-
-      $('adminLogin')
-        .classList
-        .add('hidden');
-
-
-      $('adminPanel')
-        .classList
-        .remove('hidden');
-
-    };
-
-
-  /* ADMIN */
-
-  function renderAdmin() {
-    const groups = [
-      [
-        'Guarnições',
-        ['Guarnições']
-      ],
-      [
-        'Proteínas',
-        ['Proteínas']
-      ],
-      [
-        'Bebidas e Sucos',
-        ['Bebidas e Sucos']
-      ],
-      [
-        'Sobremesas',
-        ['Sobremesas']
-      ]
-    ];
-
-
-    $('adminItems')
-      .innerHTML =
-
-      groups.map(
-        ([title, cats]) => `
+/* ADMIN */
+
+function renderAdmin() {
+  const groups = [
+    [
+      'Guarnições',
+      ['Guarnições']
+    ],
+    [
+      'Proteínas',
+      ['Proteínas']
+    ],
+    [
+      'Bebidas e Sucos',
+      ['Bebidas e Sucos']
+    ],
+    [
+      'Sobremesas',
+      ['Sobremesas']
+    ]
+  ];
+
+
+  $('adminItems')
+    .innerHTML =
+
+    groups.map(
+      ([title, cats]) => `
 
           <div class="admin-section">
 
@@ -1301,14 +1284,14 @@ async function calculateOrder() {
             </h3>
 
             ${adminDraft
-            .filter(
-              x =>
-                cats.includes(
-                  x.categoria
-                )
-            )
-            .map(
-              x => `
+          .filter(
+            x =>
+              cats.includes(
+                x.categoria
+              )
+          )
+          .map(
+            x => `
 
                     <div class="admin-item">
 
@@ -1323,9 +1306,9 @@ async function calculateOrder() {
                           type="checkbox"
                           data-admin-id="${x.id}"
                           ${x.disponivel
-                  ? 'checked'
-                  : ''
-                }
+                ? 'checked'
+                : ''
+              }
                         >
 
                         <span class="slider"></span>
@@ -1335,226 +1318,226 @@ async function calculateOrder() {
                     </div>
 
                   `
-            )
-            .join('')
-          }
+          )
+          .join('')
+        }
 
           </div>
 
         `
-      )
-        .join('');
+    )
+      .join('');
 
-  }
-
-
-  /* ALTERAR SWITCH */
-
-  $('adminItems')
-    .addEventListener(
-      'change',
-      e => {
-
-        const id =
-          e.target
-            .dataset
-            .adminId;
+}
 
 
-        if (!id) {
-          return;
-        }
+/* ALTERAR SWITCH */
+
+$('adminItems')
+  .addEventListener(
+    'change',
+    e => {
+
+      const id =
+        e.target
+          .dataset
+          .adminId;
 
 
-        const item =
-          adminDraft.find(
-            i => String(i.id) === String(id));
-
-
-        if (item) {
-
-          item.disponivel =
-            e.target.checked;
-
-        }
-
-      }
-    );
-
-
-  /* SALVAR */
-
-  $('adminSave').onclick =
-    async () => {
-
-      const response =
-        await fetch(
-          '/api/admin/menu',
-          {
-
-            method: 'PUT',
-
-            headers: {
-              'Content-Type':
-                'application/json'
-            },
-
-            body:
-              JSON.stringify({
-
-                changes:
-                  adminDraft.map(
-                    x => ({
-                      id: x.id,
-                      disponivel:
-                        x.disponivel
-                    })
-                  )
-
-              })
-
-          }
-        );
-
-
-      const data =
-        await response
-          .json()
-          .catch(
-            () => ({})
-          );
-
-
-      if (!response.ok) {
-
-        if (
-          response.status === 401
-        ) {
-
-          showErr(
-            'adminError',
-            'Sua sessão expirou. Faça login novamente.'
-          );
-
-
-          $('adminLogin')
-            .classList
-            .remove('hidden');
-
-
-          $('adminPanel')
-            .classList
-            .add('hidden');
-
-        } else {
-
-          showErr(
-            'adminError',
-            data.erro ||
-            'Não foi possível salvar.'
-          );
-
-        }
-
-
+      if (!id) {
         return;
+      }
+
+
+      const item =
+        adminDraft.find(
+          i => String(i.id) === String(id));
+
+
+      if (item) {
+
+        item.disponivel =
+          e.target.checked;
 
       }
 
-      menu =
-        adminDraft.map(
-          x => ({ ...x })
-        );
-
-
-      renderMenu();
-
-
-      alert(
-        'Alterações salvas.'
-      );
-
-
-      closeOverlay(
-        'adminOverlay'
-      );
-
-    };
-
-
-  /* LOGOUT */
-
-  $('adminClose').onclick =
-    async () => {
-
-      await fetch(
-        '/api/admin/logout',
-        {
-          method: 'POST'
-        }
-      ).catch(
-        () => { }
-      );
-
-
-      closeOverlay(
-        'adminOverlay'
-      );
-
-    };
-
-  closeOverlay(
-    'adminOverlay'
+    }
   );
 
-  /* WHATSAPP */
-  function sendWA(number) {
-    const text = encodeURIComponent(calculatedOrder.mensagem);
 
-    // Pega o número dinâmico do config.json
-    const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
+/* SALVAR */
 
-    // Limpa para deixar apenas números
-    const cleanNumber = String(waNumber).replace(/\D/g, '');
+$('adminSave').onclick =
+  async () => {
 
-    window.open(
-      `https://wa.me/${cleanNumber}?text=${text}`,
-      '_blank',
-      'noopener'
-    );
-  }
+    const response =
+      await fetch(
+        '/api/admin/menu',
+        {
 
-  /* CONFIGURAÇÃO DINÂMICA DO RESTAURANTE */
-  let restauranteConfig = {};
+          method: 'PUT',
 
-  async function carregarConfiguracoes() {
-    try {
-      // 👇 AQUI: Trocamos o link completo pelo caminho relativo!
-      const resposta = await fetch('/api/config');
-      if (resposta.ok) {
-        restauranteConfig = await resposta.json();
-        console.log('Configurações carregadas com sucesso:', restauranteConfig);
+          headers: {
+            'Content-Type':
+              'application/json'
+          },
 
-        // Se tiver um elemento com a ID 'nome-restaurante' no seu HTML
-        const elementoNome = document.getElementById('nome-restaurante');
-        if (elementoNome && restauranteConfig.nomeRestaurante) {
-          elementoNome.textContent = restauranteConfig.nomeRestaurante;
+          body:
+            JSON.stringify({
+
+              changes:
+                adminDraft.map(
+                  x => ({
+                    id: x.id,
+                    disponivel:
+                      x.disponivel
+                  })
+                )
+
+            })
+
         }
+      );
 
-        // Atualiza o botão flutuante do WhatsApp
-        const linkWa = document.getElementById('wa-float-link');
-        if (linkWa && restauranteConfig.whatsapp) {
-          const numeroLimpo = String(restauranteConfig.whatsapp).replace(/\D/g, '');
-          linkWa.href = `https://wa.me/${numeroLimpo}`;
-        }
+
+    const data =
+      await response
+        .json()
+        .catch(
+          () => ({})
+        );
+
+
+    if (!response.ok) {
+
+      if (
+        response.status === 401
+      ) {
+
+        showErr(
+          'adminError',
+          'Sua sessão expirou. Faça login novamente.'
+        );
+
+
+        $('adminLogin')
+          .classList
+          .remove('hidden');
+
+
+        $('adminPanel')
+          .classList
+          .add('hidden');
+
+      } else {
+
+        showErr(
+          'adminError',
+          data.erro ||
+          'Não foi possível salvar.'
+        );
+
       }
-    } catch (erro) {
-      console.error('Erro ao buscar /api/config:', erro);
+
+
+      return;
+
     }
 
+    menu =
+      adminDraft.map(
+        x => ({ ...x })
+      );
+
+
+    renderMenu();
+
+
+    alert(
+      'Alterações salvas.'
+    );
+
+
+    closeOverlay(
+      'adminOverlay'
+    );
+
+  };
+
+
+/* LOGOUT */
+
+$('adminClose').onclick =
+  async () => {
+
+    await fetch(
+      '/api/admin/logout',
+      {
+        method: 'POST'
+      }
+    ).catch(
+      () => { }
+    );
+
+
+    closeOverlay(
+      'adminOverlay'
+    );
+
+  };
+
+closeOverlay(
+  'adminOverlay'
+);
+
+/* WHATSAPP */
+function sendWA(number) {
+  const text = encodeURIComponent(calculatedOrder.mensagem);
+
+  // Pega o número dinâmico do config.json
+  const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
+
+  // Limpa para deixar apenas números
+  const cleanNumber = String(waNumber).replace(/\D/g, '');
+
+  window.open(
+    `https://wa.me/${cleanNumber}?text=${text}`,
+    '_blank',
+    'noopener'
+  );
+}
+
+/* CONFIGURAÇÃO DINÂMICA DO RESTAURANTE */
+let restauranteConfig = {};
+
+async function carregarConfiguracoes() {
+  try {
+    // 👇 AQUI: Trocamos o link completo pelo caminho relativo!
+    const resposta = await fetch('/api/config');
+    if (resposta.ok) {
+      restauranteConfig = await resposta.json();
+      console.log('Configurações carregadas com sucesso:', restauranteConfig);
+
+      // Se tiver um elemento com a ID 'nome-restaurante' no seu HTML
+      const elementoNome = document.getElementById('nome-restaurante');
+      if (elementoNome && restauranteConfig.nomeRestaurante) {
+        elementoNome.textContent = restauranteConfig.nomeRestaurante;
+      }
+
+      // Atualiza o botão flutuante do WhatsApp
+      const linkWa = document.getElementById('wa-float-link');
+      if (linkWa && restauranteConfig.whatsapp) {
+        const numeroLimpo = String(restauranteConfig.whatsapp).replace(/\D/g, '');
+        linkWa.href = `https://wa.me/${numeroLimpo}`;
+      }
+    }
+  } catch (erro) {
+    console.error('Erro ao buscar /api/config:', erro);
   }
+
+}
 // Função global garantida na raiz do script.js
-window.clicarEncerrarPedido = async function(event) {
+window.clicarEncerrarPedido = async function (event) {
   if (event) {
     event.preventDefault();
   }
