@@ -1205,23 +1205,16 @@ $('adminLoginBtn').onclick =
       })
     });
 
+    const data = await response.json();
 
-    const data =
-      await response
-        .json()
-        .catch(
-          () => ({})
-        );
+    if (response.ok && data.success && data.token) {
+      // Guarda o token no localStorage para as próximas requisições
+      localStorage.setItem('adminToken', data.token);
 
-
-    if (!response.ok) {
-
-      return showErr(
-        'adminError',
-        data.erro ||
-        'Falha no login.'
-      );
-
+      alert('Login realizado com sucesso!');
+      // Aqui você chama a função que abre o painel de administração ou esconde o modal de login
+    } else {
+      alert(data.error || 'Erro ao fazer login.');
     }
 
 
@@ -1365,7 +1358,10 @@ $('adminItems')
   );
 
 
-/* SALVAR */
+/* SALVAR 
+
+console.log("Token guardado:", localStorage.getItem('adminToken'));
+*/
 
 $('adminSave').onclick =
   async () => {
