@@ -1370,34 +1370,28 @@ $('adminItems')
 $('adminSave').onclick =
   async () => {
 
-    const response =
-      await fetch(
-        '/api/admin/menu',
-        {
+    const token = localStorage.getItem('adminToken'); // Ou o nome que usou para salvar o token no login
 
-          method: 'PUT',
-
-          headers: {
-            'Content-Type':
-              'application/json'
-          },
-
-          body:
-            JSON.stringify({
-
-              changes:
-                adminDraft.map(
-                  x => ({
-                    id: x.id,
-                    disponivel:
-                      x.disponivel
-                  })
-                )
-
+    const response = await fetch(
+      `${BACKEND_URL}/api/admin/atualizar-lote`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // Envia o token JWT de segurança
+        },
+        body: JSON.stringify({
+          produtos: adminDraft.map(
+            x => ({
+              id: x.id,
+              preco: x.preco,       // Inclui o preço atual
+              estoque: x.estoque,   // Inclui o estoque atual
+              disponivel: x.disponivel
             })
-
-        }
-      );
+          )
+        })
+      }
+    );
 
 
     const data =
