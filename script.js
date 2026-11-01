@@ -257,7 +257,7 @@ if ($('toStep2')) {
     }
 
     // Chama a função para desenhar os checkboxes ANTES de abrir a janela
-    renderMarmitas(); 
+    renderMarmitas();
     setStep(2);
   });
 }
@@ -268,6 +268,26 @@ if ($('backStep1')) {
     e.preventDefault();
     setStep(1);
   });
+}
+
+/* =========================================================
+   GERADORES DE CÓDIGO (PEDIDO E VERIFICAÇÃO)
+   ========================================================= */
+function gerarCodigoPedido() {
+  const agora = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  const timestamp = `${agora.getFullYear()}${pad(agora.getMonth() + 1)}${pad(agora.getDate())}${pad(agora.getHours())}${pad(agora.getMinutes())}${pad(agora.getSeconds())}`;
+  const hex = Math.floor(Math.random() * 0xFFFFFF).toString(16).toUpperCase().padStart(6, '0');
+  return `RI-${timestamp}-${hex}`;
+}
+
+function gerarCodigoVerificacao() {
+  let result = '';
+  const characters = '0123456789ABCDEF';
+  for (let i = 0; i < 12; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
 }
 
 /* =========================================================
@@ -287,12 +307,25 @@ async function calculateOrder() {
   }
 
   let totalGeral = 0;
-  let mensagem = `*Pedido - Cardápio Digital*\n\n*Cliente:* ${orderState.nome}\n*Telefone:* ${orderState.telefone}\n*Endereço:* ${orderState.endereco || 'Retirada no local'}\n\n`;
+
+  // 1. Cabeçalho do Cliente
+  let mensagem = `*${orderState.nome}*\n`;
+  mensagem += `${orderState.telefone.replace(/\D/g, '')}\n`; // Remove pontuações para ficar igual à foto
+
+  if (orderState.endereco) {
+    mensagem += `${orderState.endereco}\n`;
+  }
+
+  if (orderState.entrega) {
+    mensagem += `Entrega: (X)\nRetira: ( )\n\n`;
+  } else {
+    mensagem += `Entrega: ( )\nRetira: (X)\n\n`;
+  }
 
   // Lê o que foi marcado nos checkboxes
   const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
-                                  .map(el => menu.find(i => String(i.id) === String(el.value)))
-                                  .filter(Boolean);
+    .map(el => menu.find(i => String(i.id) === String(el.value)))
+    .filter(Boolean);
 
   const selGuarnicoes = getChecked('item_guarnicoes');
   const selProteinas = getChecked('item_proteinas');
@@ -300,51 +333,69 @@ async function calculateOrder() {
   const selSobremesas = getChecked('item_sobremesas');
   const obs = $('obsMarmita') ? $('obsMarmita').value.trim() : '';
 
-  // 1. Marmita Base (Guarnições e Proteínas)
+  // 2. Itens do Pedido
+  let subtotalMarmita = basePrice;
   totalGeral += basePrice;
-  mensagem += `*Marmita 1* (${money(basePrice)})\n`;
-  
-  if (selGuarnicoes.length > 0) {
-    mensagem += `  - Guarnições: ${selGuarnicoes.map(i => i.nome).join(', ')}\n`;
-  }
+
+  mensagem += `*Pedido 01:*\n`;
+
+  // Proteínas com "01" na frente
   if (selProteinas.length > 0) {
-    mensagem += `  - Proteínas: ${selProteinas.map(i => i.nome).join(', ')}\n`;
+    selProteinas.forEach(p => {
+      mensagem += `01 ${p.nome}\n`;
+    });
   }
-  if (obs) {
-    mensagem += `  - Obs: ${obs}\n`;
-  }
-  mensagem += '\n';
 
-  // 2. Bebidas Adicionais
+  // Guarnições diretas
+  if (selGuarnicoes.length > 0) {
+    selGuarnicoes.forEach(g => {
+      mensagem += `${g.nome}\n`;
+    });
+  }
+
+  // Preço base da marmita
+  mensagem += `${money(basePrice)}\n`;
+
+  // Bebidas (adiciona "01" e o preço)
   if (selBebidas.length > 0) {
-    mensagem += `*Bebidas*\n`;
     selBebidas.forEach(b => {
+      subtotalMarmita += Number(b.preco);
       totalGeral += Number(b.preco);
-      mensagem += `  - ${b.nome} (${money(b.preco)})\n`;
+      mensagem += `01 ${b.nome} ${money(b.preco)}\n`;
     });
-    mensagem += '\n';
   }
 
-  // 3. Sobremesas Adicionais
+  // Sobremesas (adiciona "01" e o preço)
   if (selSobremesas.length > 0) {
-    mensagem += `*Sobremesas*\n`;
     selSobremesas.forEach(s => {
+      subtotalMarmita += Number(s.preco);
       totalGeral += Number(s.preco);
-      mensagem += `  - ${s.nome} (${money(s.preco)})\n`;
+      mensagem += `01 ${s.nome} ${money(s.preco)}\n`;
     });
-    mensagem += '\n';
   }
 
-  // 4. Taxa de Entrega
+  if (obs) {
+    mensagem += `Obs: ${obs}\n`;
+  }
+
+  // 3. Totais e Fechamento
+  mensagem += `---------------------------------------------------------------------------------\n`;
+  mensagem += `Marmita 01 = ${money(subtotalMarmita)}\n`;
+
   if (orderState.entrega) {
     totalGeral += deliveryPrice;
-    mensagem += `*Taxa de Entrega:* ${money(deliveryPrice)}\n`;
-  } else {
-    mensagem += `*Retirada no Restaurante*\n`;
+    mensagem += `Taxa de Entrega = ${money(deliveryPrice)}\n`;
   }
 
-  mensagem += `\n*Total Final:* ${money(totalGeral)}`;
-  mensagem += `\n\n*Pagamento via PIX:*\nCHAVE AO CONCLUIR O PEDIDO`;
+  mensagem += `*Total final ${money(totalGeral)}*\n`;
+
+  // Códigos automáticos (Data/Hora e Hexadecimal aleatório)
+  mensagem += `Pedido: ${gerarCodigoPedido()}\n`;
+  mensagem += `Verificação: ${gerarCodigoVerificacao()}\n\n`;
+
+  mensagem += `💳 *Pagamento via PIX:*\n`;
+  mensagem += `Chave: 30571173845\n`;
+  mensagem += `(Por favor, envie o comprovante por aqui!)`;
 
   calculatedOrder = {
     mensagem: mensagem,
