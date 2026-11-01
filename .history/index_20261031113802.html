@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cardápio Digital</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+
+  <header class="container">
+
+    <div class="topbar">
+
+      <div id="datetime" class="datetime"></div>
+
+
+      <div class="brand">
+
+        <h1>
+          Cardápio Digital
+        </h1>
+
+        <p>
+          O autêntico sabor nordestino na sua mesa!
+        </p>
+
+      </div>
+
+
+      <a id="wa-float-link" class="wa-float" href="https://wa.me/5581920036280" target="_blank" rel="noopener">
+        WhatsApp
+      </a>
+
+    </div>
+
+
+    <button class="cta" id="openOrder">
+      Faça seu Pedido
+    </button>
+
+
+    <div class="notice">
+      Das 10:00 as 13:00h <br><br>
+      Entregamos de segunda a sexta
+    </div>
+
+  </header>
+
+
+  <main class="container" id="menu"></main>
+
+
+  <div class="container note">
+    Preparamos tudo com muito carinho!
+  </div>
+
+  <!-- CARDS INFORMATIVOS
+
+
+  <section class="menu-categories-section">
+  <h2>Monte sua Marmita</h2>
+  <p class="subtitle">Escolha as opções e monte do seu jeito:</p>
+  
+  <div class="categories-grid">
+    <!-- Card Proteínas -->
+    <div class="category-card">
+      <div class="category-icon">🥩</div>
+      <h3>Proteínas</h3>
+      <span class="badge-limit">Escolha até 02</span>
+      <p>Selecione as carnes e opções proteicas para a sua refeição.</p>
+    </div>
+
+    <!-- Card Guarnições -->
+    <div class="category-card">
+      <div class="category-icon">🍚</div>
+      <h3>Guarnições</h3>
+      <span class="badge-limit">Escolha até 04</span>
+      <p>Acompanhamentos variados para completar o seu prato.</p>
+    </div>
+
+    <!-- Card Bebidas -->
+    <div class="category-card">
+      <div class="category-icon">🥤</div>
+      <h3>Bebidas</h3>
+      <span class="badge-limit livre">Escolha livre</span>
+      <p>Sucos, refrigerantes e água para acompanhar.</p>
+    </div>
+
+    <!-- Card Sobremesas -->
+    <div class="category-card">
+      <div class="category-icon">🍮</div>
+      <h3>Sobremesas</h3>
+      <span class="badge-limit livre">Escolha livre</span>
+      <p>Doces caseiros para fechar sua refeição com chave de ouro.</p>
+    </div>
+  </div>
+</section>-->
+
+
+  <div class="container pix">
+
+    <strong>
+      Pagamento via PIX
+    </strong>
+
+    <br>
+
+
+    <code>
+    CHAVE AO CONCLUIR O PEDIDO
+  </code>
+
+  </div>
+
+
+  <footer class="footer">
+
+    <div class="container">
+
+      <h3>
+        Venha almoçar conosco
+      </h3>
+
+      <div>
+        Bairro da Torre, Recife-PE
+      </div>
+
+
+      <a class="maps" href="https://maps.google.com/?q=Rua+Vermelha+02+Torre" target="_blank" rel="noopener">
+        Abrir no Google Maps
+      </a>
+
+
+    </div>
+
+  </footer>
+
+
+  <button class="manage" id="openAdmin">
+    Gerenciar ⚙️
+  </button>
+  <br>
+  <br>
+  <br>
+  <br>
+
+  <!-- =====================================================
+     MODAL DO PEDIDO
+     ===================================================== -->
+
+  <div class="overlay hidden" id="orderOverlay">
+
+    <div class="modal">
+
+
+      <!-- PASSO 1 -->
+
+      <div id="orderStep1" class="step active">
+
+        <h2>
+          Faça seu Pedido
+        </h2>
+
+
+        <div id="orderError1" class="error hidden"></div>
+
+
+        <div class="form-grid">
+
+
+          <div class="field">
+
+            <label>
+              Nome Completo
+            </label>
+
+            <input id="customerName" autocomplete="name">
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Telefone
+            </label>
+
+            <input id="customerPhone" inputmode="tel" autocomplete="tel" maxlength="15" placeholder="(81) 99999-8888">
+
+          </div>
+
+
+          <div class="field full">
+
+            <label>
+              Endereço de Entrega
+            </label>
+
+            <input id="customerAddress" autocomplete="street-address">
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Quantidade de Marmitas
+            </label>
+
+            <input id="mealCount" type="number" min="1" max="20" value="1">
+
+          </div>
+
+
+        </div>
+
+
+        <div class="delivery">
+
+          <label>
+
+            <input type="radio" name="delivery" value="true" checked>
+
+            Entrega em casa - R$ 5,00
+
+          </label>
+
+
+          <label>
+
+            <input type="radio" name="delivery" value="false">
+
+            Retirar no Restaurante - R$ 0,00
+
+          </label>
+
+        </div>
+
+
+        <div class="actions">
+
+          <button class="btn gray" id="closeOrder1">
+            Cancelar
+          </button>
+
+
+          <button class="btn green" id="toStep2">
+            Continuar
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- PASSO 2 -->
+
+      <div id="orderStep2" class="step">
+
+        <h2>
+          Monte suas Marmitas
+        </h2>
+
+
+        <div id="orderError2" class="error hidden"></div>
+
+
+        <div id="marmitas"></div>
+
+
+        <div class="actions">
+
+          <button type="button" class="btn gray" id="backStep1">
+            Voltar
+          </button>
+
+
+          <button type="button" class="btn green" id="toStep3" onclick="clicarEncerrarPedido(event)">
+            Encerrar e seguir
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- PASSO 3 -->
+      <div id="orderStep3" class="step">
+
+        <h2>Resumo do Pedido</h2>
+
+        <div id="orderSummary" class="order-text"></div>
+
+        <div id="finalTotal" class="total"></div>
+
+        <div class="actions">
+          <button class="btn red" id="cancelFinal">
+            Voltar
+          </button>
+
+          <button class="btn green" id="sendRestaurant">
+            Enviar Pedido ao Restaurante
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <!-- =====================================================
+     MODAL ADMINISTRATIVO
+     ===================================================== -->
+
+  <div class="overlay hidden" id="adminOverlay">
+
+    <div class="admin-modal">
+
+      <h2>
+        Gerenciar Cardápio
+      </h2>
+
+
+      <div id="adminError" class="error hidden"></div>
+
+
+      <!-- LOGIN -->
+
+      <div id="adminLogin">
+
+        <div class="field">
+
+          <label>
+            Usuário
+          </label>
+
+          <input id="adminUser" autocomplete="username" value="admin">
+
+        </div>
+
+
+        <div class="field" style="margin-top:10px">
+
+          <label>
+            Senha
+          </label>
+
+          <input id="adminPassword" type="password" autocomplete="current-password">
+
+        </div>
+
+
+        <div class="actions">
+
+          <button class="btn gray" id="closeAdminLogin">
+            Fechar
+          </button>
+
+
+          <button class="btn green" id="adminLoginBtn">
+            Entrar
+          </button>
+
+        </div>
+
+      </div>
+
+
+      <!-- PAINEL -->
+
+      <div id="adminPanel" class="hidden">
+
+        <div id="adminItems" class="admin-grid"></div>
+
+
+        <div class="actions">
+
+          <button class="btn gray" id="adminClose">
+            Fechar
+          </button>
+
+
+          <button class="btn green" id="adminSave">
+            Salvar alterações
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <script src="script.js"></script>
+</body>
+
+</html>
