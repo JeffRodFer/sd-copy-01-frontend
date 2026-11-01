@@ -1032,54 +1032,58 @@ async function calculateOrder() {
   return true;
 
 
-  /* PASSO 2 -> PASSO 3 */
-  const btnStep3 = $('toStep3');
-  if (btnStep3) {
-    // Remove qualquer onclick inline antigo para evitar conflitos
-    btnStep3.removeAttribute('onclick');
+  /* PASSO 2 -> PASSO 3 (BLOCO SEGURO) */
+  document.addEventListener('DOMContentLoaded', () => {
+    const btnStep3 = document.getElementById('toStep3') || $('toStep3');
 
-    btnStep3.onclick = async (event) => {
-      event.preventDefault();
-      console.log('TESTE 1: Clicou em Encerrar e seguir');
+    if (btnStep3) {
+      // Remove qualquer onclick inline antigo para evitar conflitos
+      btnStep3.removeAttribute('onclick');
 
-      let ok = true;
-      if (typeof calculateOrder === 'function') {
-        try {
-          ok = await calculateOrder();
-        } catch (e) {
-          console.warn("Aviso no calculateOrder:", e);
-          ok = true; // Permite avançar para não prender o utilizador
+      btnStep3.addEventListener('click', async (event) => {
+        event.preventDefault();
+        console.log('TESTE 1: Clicou em Encerrar e seguir');
+
+        let ok = true;
+        if (typeof calculateOrder === 'function') {
+          try {
+            ok = await calculateOrder();
+          } catch (e) {
+            console.warn("Aviso no calculateOrder:", e);
+            ok = true; // Permite avançar para não prender o utilizador
+          }
         }
-      }
 
-      if (!ok) {
-        return;
-      }
+        if (!ok) {
+          return;
+        }
 
-      // Preenche o resumo do pedido
-      const summaryEl = $('orderSummary') || $('orderSummaryText');
-      if (summaryEl && typeof calculatedOrder !== 'undefined' && calculatedOrder) {
-        summaryEl.textContent = calculatedOrder.mensagem || '';
-      }
+        // Preenche o resumo do pedido
+        const summaryEl = document.getElementById('orderSummary') || document.getElementById('orderSummaryText');
+        if (summaryEl && typeof calculatedOrder !== 'undefined' && calculatedOrder) {
+          summaryEl.textContent = calculatedOrder.mensagem || '';
+        }
 
-      const totalEl = $('finalTotal');
-      if (totalEl && typeof calculatedOrder !== 'undefined' && calculatedOrder) {
-        totalEl.textContent = `Total: ${money(calculatedOrder.total || 0)}`;
-      }
+        const totalEl = document.getElementById('finalTotal');
+        if (totalEl && typeof calculatedOrder !== 'undefined' && calculatedOrder) {
+          totalEl.textContent = `Total: ${money(calculatedOrder.total || 0)}`;
+        }
 
-      // Avança para o Passo 3
-      if (typeof setStep === 'function') {
-        setStep(3);
-      } else {
-        // Fallback manual caso a função setStep falhe
-        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
-        const s3 = $('orderStep3');
-        if (s3) s3.classList.add('active');
-      }
+        // Avança para o Passo 3
+        if (typeof setStep === 'function') {
+          setStep(3);
+        } else {
+          document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+          const s3 = document.getElementById('orderStep3');
+          if (s3) s3.classList.add('active');
+        }
 
-      console.log('TESTE 4: Entrou no Passo 3 com sucesso!');
-    };
-  }
+        console.log('TESTE 4: Entrou no Passo 3 com sucesso!');
+      });
+    } else {
+      console.error("Botão toStep3 não foi encontrado no DOM!");
+    }
+  });
 
   /* WHATSAPP */
   function sendWA(number) {
