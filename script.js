@@ -372,8 +372,11 @@ if (adminPasswordInput) {
   });
 }
 
-// Evento principal para o botão Entrar
+//* =========================================================
+   LOGIN E CARREGAMENTO DO PAINEL ADMIN
+  ========================================================= */
 const adminLoginBtn = document.getElementById('adminLoginBtn');
+
 if (adminLoginBtn) {
   adminLoginBtn.addEventListener('click', async (e) => {
     e.preventDefault();
@@ -386,38 +389,94 @@ if (adminLoginBtn) {
       return;
     }
 
-    // Feedback visual: muda o botão enquanto o servidor processa
     const textoOriginal = adminLoginBtn.innerText;
     adminLoginBtn.innerText = 'Aguarde...';
     adminLoginBtn.disabled = true;
 
+    // Coloque aqui a URL exata do seu backend
+    const urlBackend = 'https://sd-copy-01-backend.vercel.app';
+
     try {
-      // Comunicação com o Backend para validar as credenciais
-      const response = await fetch(`${BACKEND_URL}/api/login`, {
+      // 1. Valida o usuário e a senha no servidor
+      const resLogin = await fetch(`${urlBackend}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: user, password: pass })
       });
 
-      if (response.ok) {
-        // Sucesso! A senha está correta.
-        document.getElementById('adminLogin').style.display = 'none';
-
-        // Aqui, no próximo passo, vamos criar a função que desenha a tabela de produtos
-        alert('Login aprovado pelo servidor! A tela de edição será carregada a seguir.');
-      } else {
-        // Falha! Senha errada ou usuário não existe
-        const data = await response.json();
-        alert(data.error || 'Usuário ou senha incorretos.');
+      if (!resLogin.ok) {
+        alert('Usuário ou senha incorretos.');
+        adminLoginBtn.innerText = textoOriginal;
+        adminLoginBtn.disabled = false;
+        return;
       }
+
+      // 2. Se a senha estiver correta, busca o cardápio atualizado
+      const resCardapio = await fetch(`${urlBackend}/api/cardapio`);
+      const produtos = await resCardapio.json();
+
+      // 3. Esconde a tela de login
+      document.getElementById('adminLogin').style.display = 'none';
+
+      // 4. Força a exibição do painel (removendo qualquer bloqueio)
+      const painel = document.getElementById('adminPanel');
+      painel.classList.remove('hidden');
+      painel.style.display = 'block';
+
+      // 5. Desenha a lista de produtos na tela
+      desenharListaAdmin(produtos);
+
     } catch (error) {
-      console.error('Erro de rede ao fazer login:', error);
-      alert('Erro de conexão com o servidor. Verifique sua internet.');
-    } finally {
-      // Restaura o botão ao estado original
+      console.error('Erro no painel:', error);
+      alert('Erro de conexão. Verifique a internet.');
       adminLoginBtn.innerText = textoOriginal;
       adminLoginBtn.disabled = false;
     }
+  });
+}
+
+/* =========================================================
+   DESENHAR A LISTA DE PRODUTOS
+   ========================================================= */
+function desenharListaAdmin(produtos) {
+  const container = document.getElementById('adminListaProdutos');
+  if (!container) return;
+
+  let html = '';
+
+  produtos.forEach(item => {
+    const preco = Number(item.preco).toFixed(2).replace('.', ',');
+    const corBotao = item.disponivel ? '#e74c3c' : '#27ae60';
+    const txtBotao = item.disponivel ? 'Desativar' : 'Ativar';
+    const corFundo = item.disponivel ? '#ffffff' : '#f0f0f0';
+
+    html += `
+      <div style="border: 1px solid #ddd; padding: 10px; 
+                  margin-bottom: 8px; border-radius: 5px; 
+                  background-color: ${corFundo};">
+        
+        <strong style="font-size: 1.1em;">${item.nome}</strong><br>
+        <span style="color: #555;">R$ ${preco} - ${item.categoria}</span><br>
+        
+        <button style="background: ${corBotao}; color: #fff; 
+                       border: none; padding: 8px 15px; 
+                       margin-top: 8px; border-radius: 4px; 
+                       cursor: pointer; font-weight: bold;">
+          ${txtBotao}
+        </button>
+        
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// Botão para sair e atualizar
+const fecharPainelBtn = document.getElementById('fecharPainelBtn');
+if (fecharPainelBtn) {
+  fecharPainelBtn.addEventListener('click', () => {
+    window.location.reload();
   });
 }
 
