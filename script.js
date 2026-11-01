@@ -338,6 +338,53 @@ if ($('backStep1')) {
 }
 
 /* =========================================================
+   CONTROLE DO MODAL DE ADMINISTRAÇÃO (LOGIN)
+   ========================================================= */
+// Encontra o botão Gerenciar (substitua 'btnGerenciar' pelo ID correto do seu botão no HTML se for diferente)
+const btnOpenAdmin = document.getElementById('btnGerenciar') || document.getElementById('openAdmin');
+const adminOverlay = document.getElementById('adminOverlay');
+const closeAdminLogin = document.getElementById('closeAdminLogin');
+
+// Evento para ABRIR a janela de login
+if (btnOpenAdmin && adminOverlay) {
+  btnOpenAdmin.addEventListener('click', (e) => {
+    e.preventDefault();
+    adminOverlay.classList.remove('hidden');
+  });
+}
+
+// Evento para FECHAR a janela de login
+if (closeAdminLogin && adminOverlay) {
+  closeAdminLogin.addEventListener('click', (e) => {
+    e.preventDefault();
+    adminOverlay.classList.add('hidden');
+  });
+}
+
+// Evento para o botão Entrar no painel
+const adminLoginBtn = document.getElementById('adminLoginBtn');
+
+if (adminLoginBtn) {
+  adminLoginBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+
+    const user = document.getElementById('adminUser').value.trim();
+    const pass = document.getElementById('adminPassword').value.trim();
+
+    if (!user || !pass) {
+      alert('Por favor, preencha o utilizador e a senha.');
+      return;
+    }
+
+    console.log('A tentar iniciar sessão com:', user);
+
+    // Aqui vai entrar a sua lógica de comunicação com o backend (Neon/Express)
+    // para validar a senha e carregar a lista de produtos para edição.
+    alert('Botão Entrar clicado! Pronto para conectar ao backend.');
+  });
+}
+
+/* =========================================================
    GERADORES DE CÓDIGO (PEDIDO E VERIFICAÇÃO)
    ========================================================= */
 function gerarCodigoPedido() {
