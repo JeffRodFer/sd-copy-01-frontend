@@ -470,7 +470,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* =========================================================
-   BOTÃO DE ENVIAR AO WHATSAPP (PASSO 3)
+   BOTÃO DE ENVIAR AO WHATSAPP (PASSO 3 E RESET)
    ========================================================= */
 if ($('sendRestaurant')) {
   $('sendRestaurant').addEventListener('click', (e) => {
@@ -480,8 +480,32 @@ if ($('sendRestaurant')) {
       return;
     }
 
+    // 1. Envia para o WhatsApp
     const phoneRestaurante = '5581920036280'; // Número do restaurante
     const url = `https://wa.me/${phoneRestaurante}?text=${encodeURIComponent(calculatedOrder.mensagem)}`;
     window.open(url, '_blank');
+
+    // 2. Zera as variáveis de estado do pedido
+    orderState = {
+      nome: '',
+      telefone: '',
+      endereco: '',
+      entrega: true,
+      marmitas: [] // Esvazia o array para resetar os blocos
+    };
+    calculatedOrder = null;
+
+    // 3. Limpa os campos de texto do formulário (Passo 1)
+    if ($('customerName')) $('customerName').value = '';
+    if ($('customerPhone')) $('customerPhone').value = '';
+    if ($('customerAddress')) $('customerAddress').value = '';
+    
+    // Opcional: Volta o botão de entrega para o padrão (se existir)
+    const defaultDelivery = document.querySelector('input[name="delivery"][value="true"]');
+    if (defaultDelivery) defaultDelivery.checked = true;
+
+    // 4. Fecha o modal de pedido e volta tudo para o Passo 1 silenciosamente
+    if ($('orderOverlay')) $('orderOverlay').classList.add('hidden');
+    setStep(1);
   });
 }
