@@ -1586,3 +1586,4 @@ async function calculateOrder() {
 
     console.log('TESTE 4: depois de setStep(3)');
   };
+}
