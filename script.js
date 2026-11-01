@@ -96,6 +96,8 @@ async function loadMenu() {
   }
 }
 
+loadMenu();
+
 function renderizarCardapioPrincipal() {
   const container = document.getElementById('menu');
   if (!container || !menu) return;
