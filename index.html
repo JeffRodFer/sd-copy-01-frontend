@@ -327,23 +327,19 @@
 
 
       <!-- PAINEL -->
+      <div id="adminPanel" style="display: none;">
 
-      <div id="adminPanel" class="hidden">
-
-        <div id="adminItems" class="admin-grid"></div>
-
+        <div id="adminListaProdutos" style="max-height: 400px; 
+                    overflow-y: auto; 
+                    margin-bottom: 20px; 
+                    padding-right: 10px;">
+          <!-- A lista de produtos vai aparecer aqui via JavaScript -->
+        </div>
 
         <div class="actions">
-
-          <button class="btn gray" id="adminClose">
-            Fechar
+          <button class="btn gray" id="fecharPainelBtn" style="width: 100%;">
+            Sair e Atualizar Cardápio
           </button>
-
-
-          <button class="btn green" id="adminSave">
-            Salvar alterações
-          </button>
-
         </div>
 
       </div>
