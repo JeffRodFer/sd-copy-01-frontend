@@ -71,13 +71,48 @@ async function loadMenu() {
     basePrice = Number(data.basePrice) || 20;
     deliveryPrice = Number(data.deliveryPrice) || 5;
 
+    // ✅ CHAMA A FUNÇÃO AQUI PARA RENDERIZAR NA TELA:
+    renderizarCardapioPrincipal();
+
   } catch (err) {
     console.warn('Não foi possível carregar o cardápio:', err);
     menu = [];
   }
+}
 
-  // REMOVIDO: A chamada automática ao renderMarmitas() foi retirada daqui 
-  // para evitar erros antes do cliente preencher os dados cadastrais.
+/* =========================================================
+   RENDERIZAR CARDÁPIO COMPLETO NA PÁGINA PRINCIPAL
+   ========================================================= */
+function renderizarCardapioPrincipal() {
+  const container = document.getElementById('cardapioHome') || document.getElementById('marmitasContainer');
+  if (!container || !menu) return;
+
+  const categorias = ['Guarnições', 'Proteínas', 'Gaseificadas', 'Sucos Naturais 350ml', 'Polpas 500ml', 'Sobremesas'];
+  let html = '';
+
+  categorias.forEach(cat => {
+    const itensCat = menu
+      .filter(item => item.categoria === cat && item.disponivel)
+      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+
+    if (itensCat.length > 0) {
+      html += `
+        <div class="home-categoria-group" style="margin-bottom: 20px;">
+          <h3 style="color: #7b401f; border-bottom: 1px solid #e0d6cc; padding-bottom: 5px; margin-bottom: 10px;">${cat}</h3>
+          <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px;">
+            ${itensCat.map(x => `
+              <li style="display: flex; justify-content: space-between; background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e0d6cc;">
+                <span>${esc(x.nome)}</span>
+                <span style="font-weight: bold; color: #7b401f;">${x.preco > 0 ? money(x.preco) : ''}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      `;
+    }
+  });
+
+  container.innerHTML = html;
 }
 
 loadMenu();
@@ -1032,246 +1067,234 @@ async function calculateOrder() {
     };
   }
 
-  // 3. Avança para o passo 3 (resumo e envio ao WhatsApp)
-  if (typeof setStep === 'function') {
-    setStep(3);
-  } else {
-    console.error('Erro: A função setStep não está definida no script.');
+  /* WHATSAPP */
+  function sendWA(number) {
+    const text = encodeURIComponent(calculatedOrder.mensagem);
+
+    // 1. Obtém o número dinâmico do config.json
+    const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
+
+    // 2. Declara a variável cleanNumber que estava a faltar
+    const cleanNumber = String(waNumber).replace(/\D/g, '');
+
+    // 3. Abre o link no WhatsApp
+    window.open(
+      `https://wa.me/${cleanNumber}?text=${text}`,
+      '_blank',
+      'noopener'
+    );
   }
 
-  console.log('TESTE 4: depois de setStep(3)');
-};
 
 
+  /* RESTAURANTE */
 
-/* WHATSAPP */
-function sendWA(number) {
-  const text = encodeURIComponent(calculatedOrder.mensagem);
+  /* =====================================================
+  ENVIAR PEDIDO AO RESTAURANTE (DIRETO NO FRONTEND)
+  ===================================================== */
+  $('sendRestaurant').onclick = () => {
+    if (!calculatedOrder) return;
 
-  // 1. Obtém o número dinâmico do config.json
-  const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
+    // 1. Lista de pratos que não exigem guarnições extras
+    const PRATOS_COMPLETOS = ['Arrumadinho de charque', 'Arrumadinho de carne de sol', 'Cozido', 'Feijoada', 'Yakisoba'];
 
-  // 2. Declara a variável cleanNumber que estava a faltar
-  const cleanNumber = String(waNumber).replace(/\D/g, '');
+    // 2. Pega o texto do resumo exibido na tela ou do calculatedOrder
+    const summaryText = $('orderSummary')?.innerText || calculatedOrder?.mensagem || 'Olá, gostaria de confirmar meu pedido de marmita!';
 
-  // 3. Abre o link no WhatsApp
-  window.open(
-    `https://wa.me/${cleanNumber}?text=${text}`,
-    '_blank',
-    'noopener'
-  );
-}
-
-
-
-/* RESTAURANTE */
-
-/* =====================================================
-ENVIAR PEDIDO AO RESTAURANTE (DIRETO NO FRONTEND)
-===================================================== */
-$('sendRestaurant').onclick = () => {
-  if (!calculatedOrder) return;
-
-  // 1. Lista de pratos que não exigem guarnições extras
-  const PRATOS_COMPLETOS = ['Arrumadinho de charque', 'Arrumadinho de carne de sol', 'Cozido', 'Feijoada', 'Yakisoba'];
-
-  // 2. Pega o texto do resumo exibido na tela ou do calculatedOrder
-  const summaryText = $('orderSummary')?.innerText || calculatedOrder?.mensagem || 'Olá, gostaria de confirmar meu pedido de marmita!';
-
-  // 3. Verifica se o resumo contém algum dos pratos completos
-  const temPratoCompleto = PRATOS_COMPLETOS.some(prato =>
-    summaryText.toLowerCase().includes(prato.toLowerCase())
-  );
-
-  // 4. Se não for um prato completo e faltar alguma seleção obrigatória
-  if (!temPratoCompleto && calculatedOrder.guarnicoesCount === 0) {
-    alert('Por favor, selecione as guarnições antes de enviar o pedido.');
-    return; // Interrompe o envio
-  }
-
-  try {
-    // Número do WhatsApp do restaurante com DDD
-    const numeroWhatsApp = '5581920036280';
-
-    // Cria o link oficial do WhatsApp com a mensagem codificada
-    const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(summaryText)}`;
-
-    // Abre o WhatsApp numa nova aba
-    window.open(urlWhatsApp, '_blank');
-
-    // Fecha o modal e limpa o pedido após enviar
-    if (typeof closeOverlay === 'function') {
-      closeOverlay('orderOverlay');
-    }
-    if (typeof resetOrder === 'function') {
-      resetOrder();
-    }
-
-  } catch (error) {
-    console.error('Erro ao abrir o WhatsApp:', error);
-    alert('Erro ao gerar o link para o WhatsApp.');
-  }
-};
-
-
-/* CÓPIA PARA CLIENTE */
-
-
-
-/* RESET */
-
-function resetOrder() {
-
-  orderState =
-    null;
-
-  calculatedOrder =
-    null;
-
-
-  $('customerName')
-    .value = '';
-
-
-  $('customerPhone')
-    .value = '';
-
-
-  $('customerAddress')
-    .value = '';
-
-
-  $('mealCount')
-    .value = 1;
-
-}
-
-
-/* =====================================================
-   ADMIN
-   ===================================================== */
-
-$('openAdmin').onclick =
-  () => {
-
-    clearErr(
-      'adminError'
+    // 3. Verifica se o resumo contém algum dos pratos completos
+    const temPratoCompleto = PRATOS_COMPLETOS.some(prato =>
+      summaryText.toLowerCase().includes(prato.toLowerCase())
     );
 
+    // 4. Se não for um prato completo e faltar alguma seleção obrigatória
+    if (!temPratoCompleto && calculatedOrder.guarnicoesCount === 0) {
+      alert('Por favor, selecione as guarnições antes de enviar o pedido.');
+      return; // Interrompe o envio
+    }
 
-    $('adminLogin')
-      .classList
-      .remove('hidden');
+    try {
+      // Número do WhatsApp do restaurante com DDD
+      const numeroWhatsApp = '5581920036280';
+
+      // Cria o link oficial do WhatsApp com a mensagem codificada
+      const urlWhatsApp = `https://wa.me/${numeroWhatsApp}?text=${encodeURIComponent(summaryText)}`;
+
+      // Abre o WhatsApp numa nova aba
+      window.open(urlWhatsApp, '_blank');
+
+      // Fecha o modal e limpa o pedido após enviar
+      if (typeof closeOverlay === 'function') {
+        closeOverlay('orderOverlay');
+      }
+      if (typeof resetOrder === 'function') {
+        resetOrder();
+      }
+
+    } catch (error) {
+      console.error('Erro ao abrir o WhatsApp:', error);
+      alert('Erro ao gerar o link para o WhatsApp.');
+    }
+  };
 
 
-    $('adminPanel')
-      .classList
-      .add('hidden');
+  /* CÓPIA PARA CLIENTE */
 
 
-    $('adminPassword')
+
+  /* RESET */
+
+  function resetOrder() {
+
+    orderState =
+      null;
+
+    calculatedOrder =
+      null;
+
+
+    $('customerName')
       .value = '';
 
 
-    openOverlay(
-      'adminOverlay'
-    );
-
-  };
+    $('customerPhone')
+      .value = '';
 
 
-$('closeAdminLogin').onclick =
-  () =>
-    closeOverlay(
-      'adminOverlay'
-    );
+    $('customerAddress')
+      .value = '';
 
 
-/* LOGIN */
+    $('mealCount')
+      .value = 1;
 
-$('adminLoginBtn').onclick =
-  async () => {
-
-    clearErr(
-      'adminError'
-    );
+  }
 
 
-    const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        username: $('adminUser').value,
-        password: $('adminPassword').value
-      })
-    });
+  /* =====================================================
+     ADMIN
+     ===================================================== */
 
-    const data = await response.json();
+  $('openAdmin').onclick =
+    () => {
 
-    if (response.ok && data.success && data.token) {
-      // Guarda o token no localStorage para as próximas requisições
-      localStorage.setItem('adminToken', data.token);
-
-      alert('Login realizado com sucesso!');
-      // Aqui você chama a função que abre o painel de administração ou esconde o modal de login
-    } else {
-      alert(data.error || 'Erro ao fazer login.');
-    }
-
-
-    adminDraft =
-      menu.map(
-        x => ({
-          ...x
-        })
+      clearErr(
+        'adminError'
       );
 
 
-    renderAdmin();
+      $('adminLogin')
+        .classList
+        .remove('hidden');
 
 
-    $('adminLogin')
-      .classList
-      .add('hidden');
+      $('adminPanel')
+        .classList
+        .add('hidden');
 
 
-    $('adminPanel')
-      .classList
-      .remove('hidden');
-
-  };
+      $('adminPassword')
+        .value = '';
 
 
-/* ADMIN */
+      openOverlay(
+        'adminOverlay'
+      );
 
-function renderAdmin() {
-  const groups = [
-    [
-      'Guarnições',
-      ['Guarnições']
-    ],
-    [
-      'Proteínas',
-      ['Proteínas']
-    ],
-    [
-      'Bebidas e Sucos',
-      ['Bebidas e Sucos']
-    ],
-    [
-      'Sobremesas',
-      ['Sobremesas']
-    ]
-  ];
+    };
 
 
-  $('adminItems')
-    .innerHTML =
+  $('closeAdminLogin').onclick =
+    () =>
+      closeOverlay(
+        'adminOverlay'
+      );
 
-    groups.map(
-      ([title, cats]) => `
+
+  /* LOGIN */
+
+  $('adminLoginBtn').onclick =
+    async () => {
+
+      clearErr(
+        'adminError'
+      );
+
+
+      const response = await fetch(`${BACKEND_URL}/api/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          username: $('adminUser').value,
+          password: $('adminPassword').value
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success && data.token) {
+        // Guarda o token no localStorage para as próximas requisições
+        localStorage.setItem('adminToken', data.token);
+
+        alert('Login realizado com sucesso!');
+        // Aqui você chama a função que abre o painel de administração ou esconde o modal de login
+      } else {
+        alert(data.error || 'Erro ao fazer login.');
+      }
+
+
+      adminDraft =
+        menu.map(
+          x => ({
+            ...x
+          })
+        );
+
+
+      renderAdmin();
+
+
+      $('adminLogin')
+        .classList
+        .add('hidden');
+
+
+      $('adminPanel')
+        .classList
+        .remove('hidden');
+
+    };
+
+
+  /* ADMIN */
+
+  function renderAdmin() {
+    const groups = [
+      [
+        'Guarnições',
+        ['Guarnições']
+      ],
+      [
+        'Proteínas',
+        ['Proteínas']
+      ],
+      [
+        'Bebidas e Sucos',
+        ['Bebidas e Sucos']
+      ],
+      [
+        'Sobremesas',
+        ['Sobremesas']
+      ]
+    ];
+
+
+    $('adminItems')
+      .innerHTML =
+
+      groups.map(
+        ([title, cats]) => `
 
           <div class="admin-section">
 
@@ -1280,14 +1303,14 @@ function renderAdmin() {
             </h3>
 
             ${adminDraft
-          .filter(
-            x =>
-              cats.includes(
-                x.categoria
-              )
-          )
-          .map(
-            x => `
+            .filter(
+              x =>
+                cats.includes(
+                  x.categoria
+                )
+            )
+            .map(
+              x => `
 
                     <div class="admin-item">
 
@@ -1302,9 +1325,9 @@ function renderAdmin() {
                           type="checkbox"
                           data-admin-id="${x.id}"
                           ${x.disponivel
-                ? 'checked'
-                : ''
-              }
+                  ? 'checked'
+                  : ''
+                }
                         >
 
                         <span class="slider"></span>
@@ -1314,252 +1337,252 @@ function renderAdmin() {
                     </div>
 
                   `
-          )
-          .join('')
-        }
+            )
+            .join('')
+          }
 
           </div>
 
         `
-    )
-      .join('');
+      )
+        .join('');
 
-}
-
-
-/* ALTERAR SWITCH */
-
-$('adminItems')
-  .addEventListener(
-    'change',
-    e => {
-
-      const id =
-        e.target
-          .dataset
-          .adminId;
+  }
 
 
-      if (!id) {
-        return;
-      }
+  /* ALTERAR SWITCH */
+
+  $('adminItems')
+    .addEventListener(
+      'change',
+      e => {
+
+        const id =
+          e.target
+            .dataset
+            .adminId;
 
 
-      const item =
-        adminDraft.find(
-          i => String(i.id) === String(id));
+        if (!id) {
+          return;
+        }
 
 
-      if (item) {
-
-        item.disponivel =
-          e.target.checked;
-
-      }
-
-    }
-  );
+        const item =
+          adminDraft.find(
+            i => String(i.id) === String(id));
 
 
-/* SALVAR 
+        if (item) {
 
-console.log("Token guardado:", localStorage.getItem('adminToken'));
-*/
+          item.disponivel =
+            e.target.checked;
 
-$('adminSave').onclick =
-  async () => {
+        }
 
-    const token = localStorage.getItem('adminToken'); // Ou o nome que usou para salvar o token no login
-
-    const response = await fetch(
-      `${BACKEND_URL}/api/admin/atualizar-lote`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // Envia o token JWT de segurança
-        },
-        body: JSON.stringify({
-          produtos: adminDraft.map(
-            x => ({
-              id: x.id,
-              preco: x.preco,       // Inclui o preço atual
-              estoque: x.estoque,   // Inclui o estoque atual
-              disponivel: x.disponivel
-            })
-          )
-        })
       }
     );
 
 
-    const data =
-      await response
-        .json()
-        .catch(
-          () => ({})
-        );
+  /* SALVAR 
+  
+  console.log("Token guardado:", localStorage.getItem('adminToken'));
+  */
 
+  $('adminSave').onclick =
+    async () => {
 
-    if (!response.ok) {
+      const token = localStorage.getItem('adminToken'); // Ou o nome que usou para salvar o token no login
 
-      if (
-        response.status === 401
-      ) {
-
-        showErr(
-          'adminError',
-          'Sua sessão expirou. Faça login novamente.'
-        );
-
-
-        $('adminLogin')
-          .classList
-          .remove('hidden');
-
-
-        $('adminPanel')
-          .classList
-          .add('hidden');
-
-      } else {
-
-        showErr(
-          'adminError',
-          data.erro ||
-          'Não foi possível salvar.'
-        );
-
-      }
-
-
-      return;
-
-    }
-
-    menu =
-      adminDraft.map(
-        x => ({ ...x })
+      const response = await fetch(
+        `${BACKEND_URL}/api/admin/atualizar-lote`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Envia o token JWT de segurança
+          },
+          body: JSON.stringify({
+            produtos: adminDraft.map(
+              x => ({
+                id: x.id,
+                preco: x.preco,       // Inclui o preço atual
+                estoque: x.estoque,   // Inclui o estoque atual
+                disponivel: x.disponivel
+              })
+            )
+          })
+        }
       );
 
 
-    renderMenu();
+      const data =
+        await response
+          .json()
+          .catch(
+            () => ({})
+          );
 
 
-    alert(
-      'Alterações salvas.'
-    );
+      if (!response.ok) {
+
+        if (
+          response.status === 401
+        ) {
+
+          showErr(
+            'adminError',
+            'Sua sessão expirou. Faça login novamente.'
+          );
 
 
-    closeOverlay(
-      'adminOverlay'
-    );
-
-  };
+          $('adminLogin')
+            .classList
+            .remove('hidden');
 
 
-/* LOGOUT */
+          $('adminPanel')
+            .classList
+            .add('hidden');
 
-$('adminClose').onclick =
-  async () => {
+        } else {
 
-    await fetch(
-      '/api/admin/logout',
-      {
-        method: 'POST'
+          showErr(
+            'adminError',
+            data.erro ||
+            'Não foi possível salvar.'
+          );
+
+        }
+
+
+        return;
+
       }
-    ).catch(
-      () => { }
-    );
+
+      menu =
+        adminDraft.map(
+          x => ({ ...x })
+        );
 
 
-    closeOverlay(
-      'adminOverlay'
-    );
+      renderMenu();
 
-  };
 
-closeOverlay(
-  'adminOverlay'
-);
+      alert(
+        'Alterações salvas.'
+      );
 
-/* WHATSAPP */
-function sendWA(number) {
-  const text = encodeURIComponent(calculatedOrder.mensagem);
 
-  // Pega o número dinâmico do config.json
-  const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
+      closeOverlay(
+        'adminOverlay'
+      );
 
-  // Limpa para deixar apenas números
-  const cleanNumber = String(waNumber).replace(/\D/g, '');
+    };
 
-  window.open(
-    `https://wa.me/${cleanNumber}?text=${text}`,
-    '_blank',
-    'noopener'
+
+  /* LOGOUT */
+
+  $('adminClose').onclick =
+    async () => {
+
+      await fetch(
+        '/api/admin/logout',
+        {
+          method: 'POST'
+        }
+      ).catch(
+        () => { }
+      );
+
+
+      closeOverlay(
+        'adminOverlay'
+      );
+
+    };
+
+  closeOverlay(
+    'adminOverlay'
   );
-}
 
-/* CONFIGURAÇÃO DINÂMICA DO RESTAURANTE */
-let restauranteConfig = {};
+  /* WHATSAPP */
+  function sendWA(number) {
+    const text = encodeURIComponent(calculatedOrder.mensagem);
 
-async function carregarConfiguracoes() {
-  try {
-    // 👇 AQUI: Trocamos o link completo pelo caminho relativo!
-    const resposta = await fetch('/api/config');
-    if (resposta.ok) {
-      restauranteConfig = await resposta.json();
-      console.log('Configurações carregadas com sucesso:', restauranteConfig);
+    // Pega o número dinâmico do config.json
+    const waNumber = restauranteConfig?.whatsapp || number || "5581920036280";
 
-      // Se tiver um elemento com a ID 'nome-restaurante' no seu HTML
-      const elementoNome = document.getElementById('nome-restaurante');
-      if (elementoNome && restauranteConfig.nomeRestaurante) {
-        elementoNome.textContent = restauranteConfig.nomeRestaurante;
+    // Limpa para deixar apenas números
+    const cleanNumber = String(waNumber).replace(/\D/g, '');
+
+    window.open(
+      `https://wa.me/${cleanNumber}?text=${text}`,
+      '_blank',
+      'noopener'
+    );
+  }
+
+  /* CONFIGURAÇÃO DINÂMICA DO RESTAURANTE */
+  let restauranteConfig = {};
+
+  async function carregarConfiguracoes() {
+    try {
+      // 👇 AQUI: Trocamos o link completo pelo caminho relativo!
+      const resposta = await fetch('/api/config');
+      if (resposta.ok) {
+        restauranteConfig = await resposta.json();
+        console.log('Configurações carregadas com sucesso:', restauranteConfig);
+
+        // Se tiver um elemento com a ID 'nome-restaurante' no seu HTML
+        const elementoNome = document.getElementById('nome-restaurante');
+        if (elementoNome && restauranteConfig.nomeRestaurante) {
+          elementoNome.textContent = restauranteConfig.nomeRestaurante;
+        }
+
+        // Atualiza o botão flutuante do WhatsApp
+        const linkWa = document.getElementById('wa-float-link');
+        if (linkWa && restauranteConfig.whatsapp) {
+          const numeroLimpo = String(restauranteConfig.whatsapp).replace(/\D/g, '');
+          linkWa.href = `https://wa.me/${numeroLimpo}`;
+        }
       }
-
-      // Atualiza o botão flutuante do WhatsApp
-      const linkWa = document.getElementById('wa-float-link');
-      if (linkWa && restauranteConfig.whatsapp) {
-        const numeroLimpo = String(restauranteConfig.whatsapp).replace(/\D/g, '');
-        linkWa.href = `https://wa.me/${numeroLimpo}`;
-      }
+    } catch (erro) {
+      console.error('Erro ao buscar /api/config:', erro);
     }
-  } catch (erro) {
-    console.error('Erro ao buscar /api/config:', erro);
+
   }
+  // Função global garantida na raiz do script.js
+  window.clicarEncerrarPedido = async function (event) {
+    if (event) {
+      event.preventDefault();
+    }
 
-}
-// Função global garantida na raiz do script.js
-window.clicarEncerrarPedido = async function (event) {
-  if (event) {
-    event.preventDefault();
-  }
+    console.log('TESTE 1: Clicou com sucesso no botão Encerrar e seguir!');
 
-  console.log('TESTE 1: Clicou com sucesso no botão Encerrar e seguir!');
+    const ok = await calculateOrder();
+    console.log('TESTE 2: calculateOrder terminou:', ok);
 
-  const ok = await calculateOrder();
-  console.log('TESTE 2: calculateOrder terminou:', ok);
+    if (!ok) {
+      return;
+    }
 
-  if (!ok) {
-    return;
-  }
+    console.log('TESTE 3: antes de setStep(3)');
 
-  console.log('TESTE 3: antes de setStep(3)');
+    const summaryEl = document.getElementById('orderSummary') || document.getElementById('orderSummaryText');
+    if (summaryEl && calculatedOrder) {
+      summaryEl.textContent = calculatedOrder.mensagem || '';
+    }
 
-  const summaryEl = document.getElementById('orderSummary') || document.getElementById('orderSummaryText');
-  if (summaryEl && calculatedOrder) {
-    summaryEl.textContent = calculatedOrder.mensagem || '';
-  }
+    const totalEl = document.getElementById('finalTotal');
+    if (totalEl && calculatedOrder) {
+      const valorTotal = Number(calculatedOrder.total || 0);
+      totalEl.textContent = `Total: R$ ${valorTotal.toFixed(2).replace('.', ',')}`;
+    }
 
-  const totalEl = document.getElementById('finalTotal');
-  if (totalEl && calculatedOrder) {
-    const valorTotal = Number(calculatedOrder.total || 0);
-    totalEl.textContent = `Total: R$ ${valorTotal.toFixed(2).replace('.', ',')}`;
-  }
+    if (typeof setStep === 'function') {
+      setStep(3);
+    }
 
-  if (typeof setStep === 'function') {
-    setStep(3);
-  }
-
-  console.log('TESTE 4: depois de setStep(3)');
-};
+    console.log('TESTE 4: depois de setStep(3)');
+  };
