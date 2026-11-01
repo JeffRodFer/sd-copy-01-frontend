@@ -128,7 +128,7 @@ function renderizarCardapioPrincipal() {
           <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.2rem;">${grupo.titulo}</h3>
           <ul style="list-style: none; padding: 0; display: flex; border-radius: 2px color:#7b401f; flex-direction: column; gap: 8px;">
             ${itensCat.map(x => `
-              <li style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 14px; border-radius: 6px; border: 1px solid #d3a16f;">
+              <li style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 14px; border-radius: 6px; border: 1px solid #e19b56;">
                 <span style="color: #333; font-weight: 500;">${x.nome}</span>
                 <span style="font-weight: bold; color: #7b401f;">${mostrarPreco && x.preco > 0 ? 'R$ ' + Number(x.preco).toFixed(2).replace('.', ',') : ''}</span>
               </li>
