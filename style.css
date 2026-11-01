@@ -403,20 +403,23 @@ ESTILOS DA SEÇÃO DE CATEGORIAS (PÁGINA PRINCIPAL)
 
 
 /* MARMITAS - Formato de lista limpa sem cards */
+/* Remove o efeito de card das marmitas, deixando apenas as listas corridas */
 .marmita {
   border: none;
   border-radius: 0;
   padding: 0;
   margin: 25px 0;
   background: transparent;
+  box-shadow: none;
 }
 
+/* Deixa o título de cada marmita mais limpo como um separador de seção */
 .marmita h3 {
-  margin: 0 0 12px;
   color: #7b401f;
   font-size: 1.2rem;
-  border-bottom: 1px solid #e0d6cc;
-  padding-bottom: 6px;
+  border-bottom: 2px solid #e0d6cc;
+  padding-bottom: 8px;
+  margin-bottom: 15px;
 }
 
 .choice-group {
