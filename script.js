@@ -711,3 +711,39 @@ if ($('sendRestaurant')) {
     setStep(1);
   });
 }
+
+
+/* =========================================================
+   ALTERAR DISPONIBILIDADE DO ITEM (SALVAR NO BANCO)
+   ========================================================= */
+// Usamos window. para garantir que o botão HTML enxergue a função
+window.alternarDisponibilidade = async function (id, disponivelAtual) {
+
+  const urlBackend = 'https://sd-copy-01-backend.vercel.app';
+
+  // A lógica de negócio inverte o status: se era true vira false
+  const novoStatus = !disponivelAtual;
+
+  try {
+    // 1. Envia a ordem de atualização (PUT) para o backend
+    const resposta = await fetch(`${urlBackend}/api/cardapio/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ disponivel: novoStatus })
+    });
+
+    if (resposta.ok) {
+      // 2. Se o banco salvou com sucesso, pede a lista atualizada
+      const resCardapio = await fetch(`${urlBackend}/api/cardapio`);
+      const produtosAtualizados = await resCardapio.json();
+
+      // 3. Redesenha a lista para o botão atualizar a cor instantaneamente
+      desenharListaAdmin(produtosAtualizados);
+    } else {
+      alert('Erro ao atualizar o status no servidor.');
+    }
+  } catch (erro) {
+    console.error('Erro de conexão ao atualizar:', erro);
+    alert('Falha na comunicação com o servidor.');
+  }
+};
