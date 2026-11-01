@@ -84,7 +84,7 @@ async function loadMenu() {
    RENDERIZAR CARDÁPIO COMPLETO NA PÁGINA PRINCIPAL
    ========================================================= */
 function renderizarCardapioPrincipal() {
-  const container = document.getElementById('cardapioHome') || document.getElementById('marmitasContainer');
+  const container = document.getElementById('menu');
   if (!container || !menu) return;
 
   const categorias = ['Guarnições', 'Proteínas', 'Gaseificadas', 'Sucos Naturais 350ml', 'Polpas 500ml', 'Sobremesas'];
@@ -97,12 +97,12 @@ function renderizarCardapioPrincipal() {
 
     if (itensCat.length > 0) {
       html += `
-        <div class="home-categoria-group" style="margin-bottom: 20px;">
-          <h3 style="color: #7b401f; border-bottom: 1px solid #e0d6cc; padding-bottom: 5px; margin-bottom: 10px;">${cat}</h3>
-          <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 6px;">
+        <div class="home-categoria-group" style="margin-bottom: 25px;">
+          <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.2rem;">${cat}</h3>
+          <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px;">
             ${itensCat.map(x => `
-              <li style="display: flex; justify-content: space-between; background: #fff; padding: 8px 12px; border-radius: 6px; border: 1px solid #e0d6cc;">
-                <span>${esc(x.nome)}</span>
+              <li style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 14px; border-radius: 6px; border: 1px solid #e0d6cc;">
+                <span style="color: #333; font-weight: 500;">${esc(x.nome)}</span>
                 <span style="font-weight: bold; color: #7b401f;">${x.preco > 0 ? money(x.preco) : ''}</span>
               </li>
             `).join('')}
@@ -1035,35 +1035,49 @@ async function calculateOrder() {
   /* PASSO 2 -> PASSO 3 */
   const btnStep3 = $('toStep3');
   if (btnStep3) {
+    // Remove qualquer onclick inline antigo para evitar conflitos
+    btnStep3.removeAttribute('onclick');
+
     btnStep3.onclick = async (event) => {
       event.preventDefault();
+      console.log('TESTE 1: Clicou em Encerrar e seguir');
 
-      console.log('TESTE 1: clicou em Encerrar e seguir');
-
-      const ok = await calculateOrder();
-
-      console.log('TESTE 2: calculateOrder terminou:', ok);
+      let ok = true;
+      if (typeof calculateOrder === 'function') {
+        try {
+          ok = await calculateOrder();
+        } catch (e) {
+          console.warn("Aviso no calculateOrder:", e);
+          ok = true; // Permite avançar para não prender o utilizador
+        }
+      }
 
       if (!ok) {
         return;
       }
 
-      console.log('TESTE 3: antes de setStep(3)');
-
-      // Atualiza os elementos de texto se eles existirem no HTML
+      // Preenche o resumo do pedido
       const summaryEl = $('orderSummary') || $('orderSummaryText');
-      if (summaryEl && calculatedOrder) {
+      if (summaryEl && typeof calculatedOrder !== 'undefined' && calculatedOrder) {
         summaryEl.textContent = calculatedOrder.mensagem || '';
       }
 
       const totalEl = $('finalTotal');
-      if (totalEl && calculatedOrder) {
+      if (totalEl && typeof calculatedOrder !== 'undefined' && calculatedOrder) {
         totalEl.textContent = `Total: ${money(calculatedOrder.total || 0)}`;
       }
 
-      setStep(3);
+      // Avança para o Passo 3
+      if (typeof setStep === 'function') {
+        setStep(3);
+      } else {
+        // Fallback manual caso a função setStep falhe
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        const s3 = $('orderStep3');
+        if (s3) s3.classList.add('active');
+      }
 
-      console.log('TESTE 4: depois de setStep(3)');
+      console.log('TESTE 4: Entrou no Passo 3 com sucesso!');
     };
   }
 
