@@ -402,7 +402,9 @@ async function calculateOrder() {
     });
 
     if (marmita.observacao) {
-      mensagem += `Obs: ${marmita.observacao}\n`;
+      // Corta rigorosamente nas 150 letras, caso o cliente tente colar um texto maior
+      const obsCortada = marmita.observacao.substring(0, 150);
+      mensagem += `Obs: ${obsCortada}\n`;
     }
 
     mensagem += `---------------------------------------------------------------------------------\n`;
@@ -499,7 +501,7 @@ if ($('sendRestaurant')) {
     if ($('customerName')) $('customerName').value = '';
     if ($('customerPhone')) $('customerPhone').value = '';
     if ($('customerAddress')) $('customerAddress').value = '';
-    
+
     // Opcional: Volta o botão de entrega para o padrão (se existir)
     const defaultDelivery = document.querySelector('input[name="delivery"][value="true"]');
     if (defaultDelivery) defaultDelivery.checked = true;
