@@ -102,7 +102,6 @@ function renderizarCardapioPrincipal() {
   const container = document.getElementById('menu');
   if (!container || !menu) return;
 
-  // Criamos grupos visuais mapeando para os nomes exatos lá do Neon
   const grupos = [
     { titulo: 'Guarnições', categoriasBd: ['Guarnições'] },
     { titulo: 'Proteínas', categoriasBd: ['Proteínas'] },
@@ -113,10 +112,13 @@ function renderizarCardapioPrincipal() {
   let html = '';
 
   grupos.forEach(grupo => {
-    // Filtra verificando se a categoria do item está dentro do array categoriasBd
+    // Filtra removendo espaços vazios do banco com .trim() para evitar falhas
     const itensCat = menu
-      .filter(item => grupo.categoriasBd.includes(item.categoria) && item.disponivel)
-      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+      .filter(item => {
+        const categoriaLimpa = (item.categoria || '').trim();
+        return grupo.categoriasBd.includes(categoriaLimpa) && item.disponivel;
+      })
+      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
 
     if (itensCat.length > 0) {
       html += `
@@ -125,8 +127,8 @@ function renderizarCardapioPrincipal() {
           <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px;">
             ${itensCat.map(x => `
               <li style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 14px; border-radius: 6px; border: 1px solid #e0d6cc;">
-                <span style="color: #333; font-weight: 500;">${esc(x.nome)}</span>
-                <span style="font-weight: bold; color: #7b401f;">${x.preco > 0 ? money(x.preco) : ''}</span>
+                <span style="color: #333; font-weight: 500;">${x.nome}</span>
+                <span style="font-weight: bold; color: #7b401f;">R$ ${Number(x.preco).toFixed(2).replace('.', ',')}</span>
               </li>
             `).join('')}
           </ul>
