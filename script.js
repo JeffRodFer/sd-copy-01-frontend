@@ -112,7 +112,6 @@ function renderizarCardapioPrincipal() {
   let html = '';
 
   grupos.forEach(grupo => {
-    // Filtra removendo espaços vazios do banco com .trim() para evitar falhas
     const itensCat = menu
       .filter(item => {
         const categoriaLimpa = (item.categoria || '').trim();
@@ -121,6 +120,9 @@ function renderizarCardapioPrincipal() {
       .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
 
     if (itensCat.length > 0) {
+      // Regra de negócio: Só mostra preço para Bebidas e Sobremesas
+      const mostrarPreco = grupo.titulo === 'Bebidas' || grupo.titulo === 'Sobremesas';
+
       html += `
         <div class="home-categoria-group" style="margin-bottom: 25px;">
           <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.2rem;">${grupo.titulo}</h3>
@@ -128,7 +130,7 @@ function renderizarCardapioPrincipal() {
             ${itensCat.map(x => `
               <li style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 14px; border-radius: 6px; border: 1px solid #e0d6cc;">
                 <span style="color: #333; font-weight: 500;">${x.nome}</span>
-                <span style="font-weight: bold; color: #7b401f;">R$ ${Number(x.preco).toFixed(2).replace('.', ',')}</span>
+                <span style="font-weight: bold; color: #7b401f;">${mostrarPreco && x.preco > 0 ? 'R$ ' + Number(x.preco).toFixed(2).replace('.', ',') : ''}</span>
               </li>
             `).join('')}
           </ul>
@@ -165,7 +167,7 @@ if ($('openOrder')) {
   $('openOrder').addEventListener('click', () => {
     if ($('orderOverlay')) $('orderOverlay').classList.remove('hidden');
     setStep(1);
-    
+
     // Garante pelo menos 1 marmita inicial se o array estiver vazio
     if (!orderState.marmitas || orderState.marmitas.length === 0) {
       orderState.marmitas = [{ guarnicoes: [], proteinas: [], observacao: '' }];
@@ -212,7 +214,7 @@ async function calculateOrder() {
   orderState.nome = $('customerName') ? $('customerName').value.trim() : '';
   orderState.telefone = $('customerPhone') ? $('customerPhone').value.trim() : '';
   orderState.endereco = $('customerAddress') ? $('customerAddress').value.trim() : '';
-  
+
   const deliveryRadio = document.querySelector('input[name="delivery"]:checked');
   orderState.entrega = deliveryRadio ? deliveryRadio.value === 'true' : true;
 
@@ -228,14 +230,14 @@ async function calculateOrder() {
     orderState.marmitas.forEach((m, idx) => {
       totalGeral += basePrice;
       mensagem += `*Marmita ${idx + 1}* (${money(basePrice)})\n`;
-      
+
       if (m.guarnicoes && m.guarnicoes.length > 0) {
         mensagem += `  - Guarnições: ${m.guarnicoes.map(id => {
           const item = menu.find(i => String(i.id) === String(id));
           return item ? item.nome : id;
         }).join(', ')}\n`;
       }
-      
+
       if (m.proteínas && m.proteínas.length > 0) {
         mensagem += `  - Proteínas: ${m.proteínas.map(id => {
           const item = menu.find(i => String(i.id) === String(id));
