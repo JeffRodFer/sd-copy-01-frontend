@@ -361,16 +361,7 @@ if (closeAdminLogin && adminOverlay) {
   });
 }
 
-// Permite usar a tecla "Enter" no teclado para fazer o login
-const adminPasswordInput = document.getElementById('adminPassword');
-if (adminPasswordInput) {
-  adminPasswordInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      document.getElementById('adminLoginBtn').click(); // Simula o clique no botão
-    }
-  });
-}
+
 
 /* =========================================================
    LOGIN E CARREGAMENTO DO PAINEL ADMIN
