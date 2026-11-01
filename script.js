@@ -617,10 +617,19 @@ async function calculateOrder() {
     mensagem += `Taxa de Entrega = ${money(deliveryPrice)}\n`;
   }
 
-  mensagem += `*Total final ${money(totalGeral)}*\n`;
+  // --- BLOCO DE DESTAQUE DO VALOR ---
+  mensagem += '\n';
+  mensagem += '*===================================*\n';
+  mensagem += `💰 *VALOR TOTAL: ${money(totalGeral)}* 💰\n`;
+  mensagem += '*===================================*\n\n';
+  // ----------------------------------
+
   mensagem += `Pedido: ${gerarCodigoPedido()}\n`;
   mensagem += `Verificação: ${gerarCodigoVerificacao()}\n\n`;
-  mensagem += `💳 *Pagamento via PIX:*\nChave: 30571173845\n(Por favor, envie o comprovante por aqui!)`;
+
+  mensagem += `💳 *Pagamento via PIX:*\n`;
+  mensagem += `Chave: 30571173845\n`;
+  mensagem += `(Por favor, envie o comprovante por aqui!)`;
 
   calculatedOrder = {
     mensagem: mensagem,
