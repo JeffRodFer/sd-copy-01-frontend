@@ -1,7 +1,7 @@
 /* =========================================================
    CONFIGURAÇÕES E ESTADO GLOBAL
    ========================================================= */
-const BACKEND_URL = 'https://sd-copy-01-backend.vercel.app'; // Cole aqui o link exato do seu projeto backend na Vercellet menu = [];
+const BACKEND_URL = 'https://sd-copy-01-backend.vercel.app';
 let basePrice = 20;
 let deliveryPrice = 5;
 let calculatedOrder = null;
@@ -128,7 +128,7 @@ function renderizarCardapioPrincipal() {
   container.innerHTML = html;
 }
 
-loadMenu();
+
 
 /* =========================================================
    MÁSCARA DE TELEFONE
