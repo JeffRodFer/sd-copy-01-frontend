@@ -1030,6 +1030,7 @@ async function calculateOrder() {
   };
 
   return true;
+}
 
 
   /* PASSO 2 -> PASSO 3 (BLOCO SEGURO) */
