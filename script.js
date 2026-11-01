@@ -361,9 +361,19 @@ if (closeAdminLogin && adminOverlay) {
   });
 }
 
-// Evento para o botão Entrar no painel
-const adminLoginBtn = document.getElementById('adminLoginBtn');
+// Permite usar a tecla "Enter" no teclado para fazer o login
+const adminPasswordInput = document.getElementById('adminPassword');
+if (adminPasswordInput) {
+  adminPasswordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('adminLoginBtn').click(); // Simula o clique no botão
+    }
+  });
+}
 
+// Evento principal para o botão Entrar
+const adminLoginBtn = document.getElementById('adminLoginBtn');
 if (adminLoginBtn) {
   adminLoginBtn.addEventListener('click', async (e) => {
     e.preventDefault();
@@ -372,15 +382,42 @@ if (adminLoginBtn) {
     const pass = document.getElementById('adminPassword').value.trim();
 
     if (!user || !pass) {
-      alert('Por favor, preencha o utilizador e a senha.');
+      alert('Por favor, preencha o usuário e a senha.');
       return;
     }
 
-    console.log('A tentar iniciar sessão com:', user);
+    // Feedback visual: muda o botão enquanto o servidor processa
+    const textoOriginal = adminLoginBtn.innerText;
+    adminLoginBtn.innerText = 'Aguarde...';
+    adminLoginBtn.disabled = true;
 
-    // Aqui vai entrar a sua lógica de comunicação com o backend (Neon/Express)
-    // para validar a senha e carregar a lista de produtos para edição.
-    alert('Botão Entrar clicado! Pronto para conectar ao backend.');
+    try {
+      // Comunicação com o Backend para validar as credenciais
+      const response = await fetch(`${BACKEND_URL}/api/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: user, password: pass })
+      });
+
+      if (response.ok) {
+        // Sucesso! A senha está correta.
+        document.getElementById('adminLogin').style.display = 'none';
+
+        // Aqui, no próximo passo, vamos criar a função que desenha a tabela de produtos
+        alert('Login aprovado pelo servidor! A tela de edição será carregada a seguir.');
+      } else {
+        // Falha! Senha errada ou usuário não existe
+        const data = await response.json();
+        alert(data.error || 'Usuário ou senha incorretos.');
+      }
+    } catch (error) {
+      console.error('Erro de rede ao fazer login:', error);
+      alert('Erro de conexão com o servidor. Verifique sua internet.');
+    } finally {
+      // Restaura o botão ao estado original
+      adminLoginBtn.innerText = textoOriginal;
+      adminLoginBtn.disabled = false;
+    }
   });
 }
 
