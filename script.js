@@ -232,7 +232,7 @@ function renderMarmitas() {
     html += `
         <div style="margin-bottom: 10px;">
           <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.1rem;">Observações da Marmita ${num}</h3>
-          <textarea id="obsMarmita_${index}" rows="2" style="width: 100%; padding: 10px; border: 1px solid #e0d6cc; border-radius: 6px; resize: vertical;" placeholder="Ex: Sem cebola, carne bem passada...">${marmita.observacao || ''}</textarea>
+          <textarea id="obsMarmita_${index}" maxlength="150" rows="2" style="width: 100%; padding: 10px; border: 1px solid #e0d6cc; border-radius: 6px; resize: vertical; word-wrap: break-word; font-family: inherit;" placeholder="Ex: Sem cebola, carne bem passada (Máx. 150 letras)...">${marmita.observacao || ''}</textarea>
         </div>
       </div> <!-- Fim do bloco da marmita -->
     `;
