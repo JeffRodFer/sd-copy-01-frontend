@@ -1,8 +1,7 @@
 /* =========================================================
    CONFIGURAÇÕES E ESTADO GLOBAL
    ========================================================= */
-const BACKEND_URL = ''; // Deixe vazio se estiver no mesmo domínio ou coloque a URL do backend
-let menu = [];
+const BACKEND_URL = 'https://sd-copy-01-backend.vercel.app'; // Cole aqui o link exato do seu projeto backend na Vercellet menu = [];
 let basePrice = 20;
 let deliveryPrice = 5;
 let calculatedOrder = null;
