@@ -352,8 +352,9 @@ function makeMarmitas(n) {
    ========================================================= */
 
 function choiceHTML(m, i) {
-  const g = available(['Guarnições']);
-  const p = available(['Proteínas']);
+  // Filtra e já ordena alfabeticamente por nome usando localeCompare para aceitar acentos corretamente
+  const g = available(['Guarnições']).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+  const p = available(['Proteínas']).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
   return `
         <div class="marmita">
