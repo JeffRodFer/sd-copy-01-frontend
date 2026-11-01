@@ -143,6 +143,67 @@ function renderizarCardapioPrincipal() {
 }
 
 
+/* =========================================================
+   RENDERIZAR OPÇÕES DE MARMITA (PASSO 2)
+   ========================================================= */
+function renderMarmitas() {
+  const container = document.getElementById('marmitas');
+  if (!container || !menu) return;
+
+  const grupos = [
+    { titulo: 'Guarnições', categoriasBd: ['Guarnições'], inputName: 'guarnicoes' },
+    { titulo: 'Proteínas', categoriasBd: ['Proteínas'], inputName: 'proteinas' },
+    { titulo: 'Bebidas', categoriasBd: ['Gaseificadas', 'Sucos Naturais 300ml', 'Polpas 500ml'], inputName: 'bebidas' },
+    { titulo: 'Sobremesas', categoriasBd: ['Sobremesas'], inputName: 'sobremesas' }
+  ];
+
+  let html = '';
+
+  grupos.forEach(grupo => {
+    const itensCat = menu
+      .filter(item => {
+        const cat = (item.categoria || '').trim();
+        return grupo.categoriasBd.includes(cat) && item.disponivel;
+      })
+      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
+
+    if (itensCat.length > 0) {
+      // Apenas Bebidas e Sobremesas exibem preço
+      const mostrarPreco = grupo.titulo === 'Bebidas' || grupo.titulo === 'Sobremesas';
+
+      html += `
+        <div style="margin-bottom: 20px;">
+          <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.1rem;">${grupo.titulo}</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${itensCat.map(x => `
+              <label style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 12px 14px; border-radius: 6px; border: 1px solid #e19b56; cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <input type="checkbox" name="item_${grupo.inputName}" value="${x.id}" style="transform: scale(1.3); accent-color: #7b401f;">
+                  <span style="color: #333; font-weight: 500;">${x.nome}</span>
+                </div>
+                <span style="font-weight: bold; color: #7b401f;">
+                  ${mostrarPreco && x.preco > 0 ? 'R$ ' + Number(x.preco).toFixed(2).replace('.', ',') : ''}
+                </span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  // Adiciona o campo de observações
+  html += `
+    <div style="margin-bottom: 20px;">
+      <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.1rem;">Observações</h3>
+      <textarea id="obsMarmita" rows="3" style="width: 100%; padding: 10px; border: 1px solid #e19b56; border-radius: 6px; resize: vertical;" placeholder="Ex: Sem cebola, carne bem passada..."></textarea>
+    </div>
+  `;
+
+  container.innerHTML = html;
+}
+
+
 
 /* =========================================================
    MÁSCARA DE TELEFONE
@@ -195,6 +256,8 @@ if ($('toStep2')) {
       return;
     }
 
+    // Chama a função para desenhar os checkboxes ANTES de abrir a janela
+    renderMarmitas(); 
     setStep(2);
   });
 }
@@ -226,32 +289,53 @@ async function calculateOrder() {
   let totalGeral = 0;
   let mensagem = `*Pedido - Cardápio Digital*\n\n*Cliente:* ${orderState.nome}\n*Telefone:* ${orderState.telefone}\n*Endereço:* ${orderState.endereco || 'Retirada no local'}\n\n`;
 
-  if (orderState.marmitas && orderState.marmitas.length > 0) {
-    orderState.marmitas.forEach((m, idx) => {
-      totalGeral += basePrice;
-      mensagem += `*Marmita ${idx + 1}* (${money(basePrice)})\n`;
+  // Lê o que foi marcado nos checkboxes
+  const getChecked = (name) => Array.from(document.querySelectorAll(`input[name="${name}"]:checked`))
+                                  .map(el => menu.find(i => String(i.id) === String(el.value)))
+                                  .filter(Boolean);
 
-      if (m.guarnicoes && m.guarnicoes.length > 0) {
-        mensagem += `  - Guarnições: ${m.guarnicoes.map(id => {
-          const item = menu.find(i => String(i.id) === String(id));
-          return item ? item.nome : id;
-        }).join(', ')}\n`;
-      }
+  const selGuarnicoes = getChecked('item_guarnicoes');
+  const selProteinas = getChecked('item_proteinas');
+  const selBebidas = getChecked('item_bebidas');
+  const selSobremesas = getChecked('item_sobremesas');
+  const obs = $('obsMarmita') ? $('obsMarmita').value.trim() : '';
 
-      if (m.proteínas && m.proteínas.length > 0) {
-        mensagem += `  - Proteínas: ${m.proteínas.map(id => {
-          const item = menu.find(i => String(i.id) === String(id));
-          return item ? item.nome : id;
-        }).join(', ')}\n`;
-      }
+  // 1. Marmita Base (Guarnições e Proteínas)
+  totalGeral += basePrice;
+  mensagem += `*Marmita 1* (${money(basePrice)})\n`;
+  
+  if (selGuarnicoes.length > 0) {
+    mensagem += `  - Guarnições: ${selGuarnicoes.map(i => i.nome).join(', ')}\n`;
+  }
+  if (selProteinas.length > 0) {
+    mensagem += `  - Proteínas: ${selProteinas.map(i => i.nome).join(', ')}\n`;
+  }
+  if (obs) {
+    mensagem += `  - Obs: ${obs}\n`;
+  }
+  mensagem += '\n';
 
-      if (m.observacao) {
-        mensagem += `  - Obs: ${m.observacao}\n`;
-      }
-      mensagem += '\n';
+  // 2. Bebidas Adicionais
+  if (selBebidas.length > 0) {
+    mensagem += `*Bebidas*\n`;
+    selBebidas.forEach(b => {
+      totalGeral += Number(b.preco);
+      mensagem += `  - ${b.nome} (${money(b.preco)})\n`;
     });
+    mensagem += '\n';
   }
 
+  // 3. Sobremesas Adicionais
+  if (selSobremesas.length > 0) {
+    mensagem += `*Sobremesas*\n`;
+    selSobremesas.forEach(s => {
+      totalGeral += Number(s.preco);
+      mensagem += `  - ${s.nome} (${money(s.preco)})\n`;
+    });
+    mensagem += '\n';
+  }
+
+  // 4. Taxa de Entrega
   if (orderState.entrega) {
     totalGeral += deliveryPrice;
     mensagem += `*Taxa de Entrega:* ${money(deliveryPrice)}\n`;
