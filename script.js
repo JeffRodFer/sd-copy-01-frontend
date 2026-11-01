@@ -172,6 +172,9 @@ function salvarEstadoMarmitas() {
   });
 }
 
+/* =========================================================
+   GERENCIAMENTO DE MÚLTIPLAS MARMITAS E RENDERIZAÇÃO
+   ========================================================= */
 function renderMarmitas() {
   const container = document.getElementById('marmitas');
   if (!container || !menu) return;
@@ -206,26 +209,45 @@ function renderMarmitas() {
 
       if (itensCat.length > 0) {
         const mostrarPreco = grupo.titulo === 'Bebidas' || grupo.titulo === 'Sobremesas';
-        html += `
-          <div style="margin-bottom: 20px;">
-            <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.1rem;">${grupo.titulo}</h3>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              ${itensCat.map(x => {
+
+        // Gera os checkboxes dos itens
+        const itensHtml = itensCat.map(x => {
           const isChecked = marmita[grupo.inputName] && marmita[grupo.inputName].includes(String(x.id)) ? 'checked' : '';
           return `
-                <label style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 12px 14px; border-radius: 6px; border: 1px solid #e0d6cc; cursor: pointer;">
-                  <div style="display: flex; align-items: center; gap: 10px;">
-                    <input type="checkbox" name="item_${grupo.inputName}_${index}" value="${x.id}" ${isChecked} style="transform: scale(1.3); accent-color: #7b401f;">
-                    <span style="color: #333; font-weight: 500;">${x.nome}</span>
-                  </div>
-                  <span style="font-weight: bold; color: #7b401f;">
-                    ${mostrarPreco && x.preco > 0 ? 'R$ ' + Number(x.preco).toFixed(2).replace('.', ',') : ''}
-                  </span>
-                </label>
-              `}).join('')}
+          <label style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 12px 14px; border-radius: 6px; border: 1px solid #e0d6cc; cursor: pointer;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <input type="checkbox" name="item_${grupo.inputName}_${index}" value="${x.id}" ${isChecked} style="transform: scale(1.3); accent-color: #7b401f;">
+              <span style="color: #333; font-weight: 500;">${x.nome}</span>
             </div>
-          </div>
-        `;
+            <span style="font-weight: bold; color: #7b401f;">
+              ${mostrarPreco && x.preco > 0 ? 'R$ ' + Number(x.preco).toFixed(2).replace('.', ',') : ''}
+            </span>
+          </label>
+        `}).join('');
+
+        // Se for Bebida ou Sobremesa, coloca dentro de um bloco retrátil (<details>)
+        if (mostrarPreco) {
+          html += `
+            <details style="margin-bottom: 20px; background: #faf4ed; border: 1px solid #e19b56; border-radius: 6px; padding: 12px;">
+              <summary style="color: #7b401f; font-size: 1.1rem; font-weight: bold; cursor: pointer; outline: none;">
+                ▶ Adicionar ${grupo.titulo} (Opcional)
+              </summary>
+              <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                ${itensHtml}
+              </div>
+            </details>
+          `;
+        } else {
+          // Se for Guarnição ou Proteína, mostra normalmente
+          html += `
+            <div style="margin-bottom: 20px;">
+              <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.1rem;">${grupo.titulo}</h3>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                ${itensHtml}
+              </div>
+            </div>
+          `;
+        }
       }
     });
 
