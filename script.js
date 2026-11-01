@@ -27,7 +27,9 @@ function esc(s) {
 }
 
 function available(cats) {
-  return menu.filter(item => cats.includes(item.categoria) && item.disponivel);
+  return menu
+    .filter(item => cats.includes(item.categoria) && item.disponivel)
+    .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
 }
 
 /* RELÓGIO */
