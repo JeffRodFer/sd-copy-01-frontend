@@ -372,11 +372,22 @@ if (adminPasswordInput) {
   });
 }
 
-//* =========================================================
+/* =========================================================
    LOGIN E CARREGAMENTO DO PAINEL ADMIN
-  ========================================================= */
-const adminLoginBtn = document.getElementById('adminLoginBtn');
+   ========================================================= */
+// 1. Permite usar a tecla "Enter" na senha
+const adminPasswordInput = document.getElementById('adminPassword');
+if (adminPasswordInput) {
+  adminPasswordInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      document.getElementById('adminLoginBtn').click();
+    }
+  });
+}
 
+// 2. Evento principal do botão Entrar
+const adminLoginBtn = document.getElementById('adminLoginBtn');
 if (adminLoginBtn) {
   adminLoginBtn.addEventListener('click', async (e) => {
     e.preventDefault();
@@ -393,11 +404,10 @@ if (adminLoginBtn) {
     adminLoginBtn.innerText = 'Aguarde...';
     adminLoginBtn.disabled = true;
 
-    // Coloque aqui a URL exata do seu backend
+    // Conexão com o backend
     const urlBackend = 'https://sd-copy-01-backend.vercel.app';
 
     try {
-      // 1. Valida o usuário e a senha no servidor
       const resLogin = await fetch(`${urlBackend}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -411,19 +421,16 @@ if (adminLoginBtn) {
         return;
       }
 
-      // 2. Se a senha estiver correta, busca o cardápio atualizado
+      // Busca o cardápio e desenha a tela do painel
       const resCardapio = await fetch(`${urlBackend}/api/cardapio`);
       const produtos = await resCardapio.json();
 
-      // 3. Esconde a tela de login
       document.getElementById('adminLogin').style.display = 'none';
 
-      // 4. Força a exibição do painel (removendo qualquer bloqueio)
       const painel = document.getElementById('adminPanel');
       painel.classList.remove('hidden');
       painel.style.display = 'block';
 
-      // 5. Desenha a lista de produtos na tela
       desenharListaAdmin(produtos);
 
     } catch (error) {
