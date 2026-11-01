@@ -102,18 +102,26 @@ function renderizarCardapioPrincipal() {
   const container = document.getElementById('menu');
   if (!container || !menu) return;
 
-  const categorias = ['Guarnições', 'Proteínas', 'Gaseificadas', 'Sucos Naturais 350ml', 'Polpas 500ml', 'Sobremesas'];
+  // Criamos grupos visuais mapeando para os nomes exatos lá do Neon
+  const grupos = [
+    { titulo: 'Guarnições', categoriasBd: ['Guarnições'] },
+    { titulo: 'Proteínas', categoriasBd: ['Proteínas'] },
+    { titulo: 'Bebidas', categoriasBd: ['Gaseificadas', 'Sucos Naturais 300ml', 'Polpas 500ml'] },
+    { titulo: 'Sobremesas', categoriasBd: ['Sobremesas'] }
+  ];
+
   let html = '';
 
-  categorias.forEach(cat => {
+  grupos.forEach(grupo => {
+    // Filtra verificando se a categoria do item está dentro do array categoriasBd
     const itensCat = menu
-      .filter(item => item.categoria === cat && item.disponivel)
+      .filter(item => grupo.categoriasBd.includes(item.categoria) && item.disponivel)
       .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
 
     if (itensCat.length > 0) {
       html += `
         <div class="home-categoria-group" style="margin-bottom: 25px;">
-          <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.2rem;">${cat}</h3>
+          <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.2rem;">${grupo.titulo}</h3>
           <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px;">
             ${itensCat.map(x => `
               <li style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 14px; border-radius: 6px; border: 1px solid #e0d6cc;">
