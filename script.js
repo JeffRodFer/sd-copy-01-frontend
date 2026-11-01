@@ -434,7 +434,7 @@ if (adminLoginBtn) {
 }
 
 /* =========================================================
-   DESENHAR A LISTA DE PRODUTOS
+   DESENHAR A LISTA DE PRODUTOS (AGRUPADA POR CATEGORIA)
    ========================================================= */
 function desenharListaAdmin(produtos) {
   const container = document.getElementById('adminListaProdutos');
@@ -442,30 +442,67 @@ function desenharListaAdmin(produtos) {
 
   let html = '';
 
-  produtos.forEach(item => {
-    const preco = Number(item.preco).toFixed(2).replace('.', ',');
-    const corBotao = item.disponivel ? '#e74c3c' : '#27ae60';
-    const txtBotao = item.disponivel ? 'Desativar' : 'Ativar';
-    const corFundo = item.disponivel ? '#ffffff' : '#f0f0f0';
+  // 1. Define uma cor de fundo pastel para cada categoria
+  const coresCategorias = {
+    'Guarnições': '#fff3e0', // Laranja bem claro
+    'Proteínas': '#ffebee',  // Vermelho bem claro
+    'Bebidas': '#e3f2fd',    // Azul bem claro
+    'Sobremesas': '#f3e5f5'  // Roxo bem claro
+  };
 
-    html += `
-      <div style="border: 1px solid #ddd; padding: 10px; 
-                  margin-bottom: 8px; border-radius: 5px; 
-                  background-color: ${corFundo};">
-        
-        <strong style="font-size: 1.1em;">${item.nome}</strong><br>
-        <span style="color: #555;">R$ ${preco} - ${item.categoria}</span><br>
-        
-        <button style="background: ${corBotao}; color: #fff; 
-                       border: none; padding: 8px 15px; 
-                       margin-top: 8px; border-radius: 4px; 
-                       cursor: pointer; font-weight: bold;">
-          ${txtBotao}
-        </button>
-        
-      </div>
-    `;
+  // 2. Agrupa os produtos pela categoria
+  const produtosPorCategoria = {};
+  produtos.forEach(item => {
+    if (!produtosPorCategoria[item.categoria]) {
+      produtosPorCategoria[item.categoria] = [];
+    }
+    produtosPorCategoria[item.categoria].push(item);
   });
+
+  // 3. Constrói o HTML separado por blocos
+  for (const categoria in produtosPorCategoria) {
+    // Busca a cor correspondente ou usa um cinza claro como padrão
+    const corFundoSecao = coresCategorias[categoria] || '#f9f9f9';
+
+    // Abre o bloco da Categoria
+    html += `
+      <div style="background-color: ${corFundoSecao}; padding: 12px; 
+                  border-radius: 8px; margin-bottom: 20px; 
+                  border: 1px solid #ddd;">
+        
+        <h3 style="margin-top: 0; margin-bottom: 15px; color: #333; 
+                   border-bottom: 2px solid #ccc; padding-bottom: 5px;">
+          ${categoria}
+        </h3>
+    `;
+
+    // 4. Desenha os itens dentro desta categoria (agora sem o preço)
+    produtosPorCategoria[categoria].forEach(item => {
+      const corBotao = item.disponivel ? '#e74c3c' : '#27ae60';
+      const txtBotao = item.disponivel ? 'Desativar' : 'Ativar';
+      const opacidade = item.disponivel ? '1' : '0.6'; // Deixa o item meio apagado se estiver desativado
+
+      html += `
+        <div style="display: flex; justify-content: space-between; align-items: center; 
+                    background-color: #fff; border: 1px solid #ccc; padding: 10px; 
+                    margin-bottom: 8px; border-radius: 5px; opacity: ${opacidade};">
+          
+          <strong style="font-size: 1.1em; color: #333;">${item.nome}</strong>
+          
+          <button onclick="alternarDisponibilidade(${item.id}, ${item.disponivel})" 
+                  style="background: ${corBotao}; color: #fff; border: none; 
+                         padding: 8px 15px; border-radius: 4px; cursor: pointer; 
+                         font-weight: bold; min-width: 95px;">
+            ${txtBotao}
+          </button>
+          
+        </div>
+      `;
+    });
+
+    // Fecha o bloco da Categoria
+    html += `</div>`;
+  }
 
   container.innerHTML = html;
 }
