@@ -102,7 +102,9 @@ function renderizarCardapioPrincipal() {
   const container = document.getElementById('menu');
   if (!container || !menu) return;
 
+  // 1. Adicionamos os "Especiais" no topo da lista para dar destaque
   const grupos = [
+    { titulo: 'Especiais', categoriasBd: ['Especiais'] },
     { titulo: 'Guarnições', categoriasBd: ['Guarnições'] },
     { titulo: 'Proteínas', categoriasBd: ['Proteínas'] },
     { titulo: 'Bebidas', categoriasBd: ['Gaseificadas', 'Sucos Naturais 300ml', 'Polpas 500ml'] },
@@ -120,13 +122,13 @@ function renderizarCardapioPrincipal() {
       .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
 
     if (itensCat.length > 0) {
-      // Regra de negócio: Só mostra preço para Bebidas e Sobremesas
-      const mostrarPreco = grupo.titulo === 'Bebidas' || grupo.titulo === 'Sobremesas';
+      // 2. Incluímos os Especiais para mostrar o preço deles (caso tenham um valor específico)
+      const mostrarPreco = grupo.titulo === 'Bebidas' || grupo.titulo === 'Sobremesas' || grupo.titulo === 'Especiais';
 
       html += `
         <div class="home-categoria-group" style="margin-bottom: 25px;">
           <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.2rem;">${grupo.titulo}</h3>
-          <ul style="list-style: none; padding: 0; display: flex; border-radius: 2px color:#7b401f; flex-direction: column; gap: 8px;">
+          <ul style="list-style: none; padding: 0; display: flex; flex-direction: column; gap: 8px;">
             ${itensCat.map(x => `
               <li style="display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 10px 14px; border-radius: 6px; border: 1px solid #e19b56;">
                 <span style="color: #333; font-weight: 500;">${x.nome}</span>
@@ -148,7 +150,10 @@ function renderizarCardapioPrincipal() {
    ========================================================= */
 window.adicionarMarmita = function () {
   salvarEstadoMarmitas(); // Salva o que já foi preenchido
-  orderState.marmitas.push({ guarnicoes: [], proteinas: [], bebidas: [], sobremesas: [], observacao: '' });
+
+  // Adicionamos 'especiais: []' na nova marmita
+  orderState.marmitas.push({ especiais: [], guarnicoes: [], proteinas: [], bebidas: [], sobremesas: [], observacao: '' });
+
   renderMarmitas(); // Desenha a tela novamente com a nova marmita
 };
 
@@ -162,6 +167,9 @@ function salvarEstadoMarmitas() {
   if (!orderState.marmitas) return;
   orderState.marmitas.forEach((m, i) => {
     const getVals = (name) => Array.from(document.querySelectorAll(`input[name="${name}_${i}"]:checked`)).map(el => el.value);
+
+    // Agora o sistema rastreia os itens Especiais selecionados
+    m.especiais = getVals('item_especiais');
     m.guarnicoes = getVals('item_guarnicoes');
     m.proteinas = getVals('item_proteinas');
     m.bebidas = getVals('item_bebidas');
@@ -179,7 +187,9 @@ function renderMarmitas() {
   const container = document.getElementById('marmitas');
   if (!container || !menu) return;
 
+  // 1. Adicionamos os Especiais na lista de grupos do Modal
   const grupos = [
+    { titulo: 'Especiais (Prato Único)', categoriasBd: ['Especiais'], inputName: 'especiais' },
     { titulo: 'Guarnições', categoriasBd: ['Guarnições'], inputName: 'guarnicoes' },
     { titulo: 'Proteínas', categoriasBd: ['Proteínas'], inputName: 'proteinas' },
     { titulo: 'Bebidas', categoriasBd: ['Gaseificadas', 'Sucos Naturais 300ml', 'Polpas 500ml'], inputName: 'bebidas' },
@@ -190,6 +200,8 @@ function renderMarmitas() {
 
   orderState.marmitas.forEach((marmita, index) => {
     const num = String(index + 1).padStart(2, '0');
+    // Verifica se já existe algum especial marcado nesta marmita (para manter bloqueado ao recarregar a tela)
+    const temEspecial = marmita.especiais && marmita.especiais.length > 0;
 
     html += `
       <div style="border: 2px solid #e19b56; border-radius: 8px; padding: 15px; margin-bottom: 25px; background: #fffdf9;">
@@ -208,15 +220,26 @@ function renderMarmitas() {
         .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
 
       if (itensCat.length > 0) {
-        const mostrarPreco = grupo.titulo === 'Bebidas' || grupo.titulo === 'Sobremesas';
+        // Bebidas, Sobremesas E Especiais podem ter preço adicional mostrado
+        const mostrarPreco = grupo.titulo === 'Bebidas' || grupo.titulo === 'Sobremesas' || grupo.titulo === 'Especiais (Prato Único)';
+
+        // 2. Lógica Visual de Bloqueio (Desabilita Proteínas e Guarnições se um Especial estiver marcado)
+        const isBloqueado = temEspecial && (grupo.inputName === 'guarnicoes' || grupo.inputName === 'proteinas');
+        const opacidade = isBloqueado ? '0.5' : '1';
+        const pointer = isBloqueado ? 'not-allowed' : 'pointer';
 
         // Gera os checkboxes dos itens
         const itensHtml = itensCat.map(x => {
           const isChecked = marmita[grupo.inputName] && marmita[grupo.inputName].includes(String(x.id)) ? 'checked' : '';
+
+          // 3. O "gatilho" (onchange) que o Especial dispara quando clicado
+          const eventoTrava = grupo.inputName === 'especiais' ? `onchange="travarMarmita(${index})"` : '';
+          const disabledAttr = isBloqueado ? 'disabled' : '';
+
           return `
-          <label style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 12px 14px; border-radius: 6px; border: 1px solid #e0d6cc; cursor: pointer;">
+          <label class="label-${grupo.inputName}-${index}" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 12px 14px; border-radius: 6px; border: 1px solid #e0d6cc; cursor: ${pointer}; opacity: ${opacidade};">
             <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="checkbox" name="item_${grupo.inputName}_${index}" value="${x.id}" ${isChecked} style="transform: scale(1.3); accent-color: #7b401f;">
+              <input type="checkbox" class="check-${grupo.inputName}-${index}" name="item_${grupo.inputName}_${index}" value="${x.id}" ${isChecked} ${disabledAttr} ${eventoTrava} style="transform: scale(1.3); accent-color: #7b401f;">
               <span style="color: #333; font-weight: 500;">${x.nome}</span>
             </div>
             <span style="font-weight: bold; color: #7b401f;">
@@ -225,8 +248,8 @@ function renderMarmitas() {
           </label>
         `}).join('');
 
-        // Se for Bebida ou Sobremesa, coloca dentro de um bloco retrátil (<details>)
-        if (mostrarPreco) {
+        // Se for Bebida ou Sobremesa, coloca dentro do bloco retrátil (<details>)
+        if (grupo.titulo === 'Bebidas' || grupo.titulo === 'Sobremesas') {
           html += `
             <details style="margin-bottom: 20px; background: #faf4ed; border: 1px solid #e19b56; border-radius: 6px; padding: 12px;">
               <summary style="color: #7b401f; font-size: 1.1rem; font-weight: bold; cursor: pointer; outline: none;">
@@ -238,7 +261,7 @@ function renderMarmitas() {
             </details>
           `;
         } else {
-          // Se for Guarnição ou Proteína, mostra normalmente
+          // Se for Especial, Guarnição ou Proteína, mostra normalmente
           html += `
             <div style="margin-bottom: 20px;">
               <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.1rem;">${grupo.titulo}</h3>
@@ -260,7 +283,6 @@ function renderMarmitas() {
     `;
   });
 
-  // Botão de adicionar nova marmita
   html += `
     <button type="button" onclick="adicionarMarmita()" style="width: 100%; background: #27ae60; color: #fff; border: none; padding: 14px; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; margin-bottom: 15px;">
       + Adicionar Outra Marmita
@@ -269,6 +291,12 @@ function renderMarmitas() {
 
   container.innerHTML = html;
 }
+
+// 4. A Função que executa o bloqueio quando o Especial é clicado
+window.travarMarmita = function (index) {
+  salvarEstadoMarmitas(); // Lê a tela para ver se o cliente marcou ou desmarcou o Especial
+  renderMarmitas(); // Redesenha a tela instantaneamente aplicando o visual de bloqueado ou liberado
+};
 
 
 
@@ -296,9 +324,9 @@ if ($('openOrder')) {
     if ($('orderOverlay')) $('orderOverlay').classList.remove('hidden');
     setStep(1);
 
-    // Garante pelo menos 1 marmita inicial se o array estiver vazio
+    // Garante pelo menos 1 marmita inicial completa (AGORA COM ESPECIAIS, BEBIDAS E SOBREMESAS)
     if (!orderState.marmitas || orderState.marmitas.length === 0) {
-      orderState.marmitas = [{ guarnicoes: [], proteinas: [], observacao: '' }];
+      orderState.marmitas = [{ especiais: [], guarnicoes: [], proteinas: [], bebidas: [], sobremesas: [], observacao: '' }];
     }
   });
 }
@@ -569,23 +597,28 @@ async function calculateOrder() {
   // 2. Loop por todas as marmitas do pedido
   orderState.marmitas.forEach((marmita, index) => {
     const num = String(index + 1).padStart(2, '0');
+
+    // Busca os itens desta marmita
+    const selEspeciais = (marmita.especiais || []).map(id => menu.find(i => String(i.id) === String(id))).filter(Boolean);
+    const selGuarnicoes = (marmita.guarnicoes || []).map(id => menu.find(i => String(i.id) === String(id))).filter(Boolean);
+    const selProteinas = (marmita.proteinas || []).map(id => menu.find(i => String(i.id) === String(id))).filter(Boolean);
+    const selBebidas = (marmita.bebidas || []).map(id => menu.find(i => String(i.id) === String(id))).filter(Boolean);
+    const selSobremesas = (marmita.sobremesas || []).map(id => menu.find(i => String(i.id) === String(id))).filter(Boolean);
+
+    // Usa sempre o preço base fixo (ex: R$ 20,00)
     let subtotalMarmita = basePrice;
     totalGeral += basePrice;
 
     mensagem += `*Pedido ${num}:*\n`;
 
-    // Busca os itens desta marmita específica
-    const selGuarnicoes = marmita.guarnicoes.map(id => menu.find(i => String(i.id) === String(id))).filter(Boolean);
-    const selProteinas = marmita.proteinas.map(id => menu.find(i => String(i.id) === String(id))).filter(Boolean);
-    const selBebidas = marmita.bebidas.map(id => menu.find(i => String(i.id) === String(id))).filter(Boolean);
-    const selSobremesas = marmita.sobremesas.map(id => menu.find(i => String(i.id) === String(id))).filter(Boolean);
-
-    // Proteínas com "01"
+    // Imprime o Especial (se houver)
+    if (selEspeciais.length > 0) selEspeciais.forEach(e => { mensagem += `01 ${e.nome}\n`; });
+    // Imprime as Proteínas com "01" (se houver)
     if (selProteinas.length > 0) selProteinas.forEach(p => { mensagem += `01 ${p.nome}\n`; });
-    // Guarnições diretas
+    // Imprime as Guarnições
     if (selGuarnicoes.length > 0) selGuarnicoes.forEach(g => { mensagem += `${g.nome}\n`; });
 
-    // Preço base
+    // Mostra o Preço base fixo
     mensagem += `${money(basePrice)}\n`;
 
     // Bebidas
@@ -603,7 +636,6 @@ async function calculateOrder() {
     });
 
     if (marmita.observacao) {
-      // Corta rigorosamente nas 150 letras, caso o cliente tente colar um texto maior
       const obsCortada = marmita.observacao.substring(0, 150);
       mensagem += `Obs: ${obsCortada}\n`;
     }
@@ -619,7 +651,7 @@ async function calculateOrder() {
   }
 
   // --- BLOCO DE DESTAQUE DO VALOR ---
-  mensagem += '\n'; 
+  mensagem += '\n';
   mensagem += '*===================================*\n';
   mensagem += `💰 *VALOR TOTAL: ${money(totalGeral)}* 💰\n`;
   mensagem += '*===================================*\n\n';
@@ -627,8 +659,7 @@ async function calculateOrder() {
 
   mensagem += `Pedido: ${gerarCodigoPedido()}\n`;
   mensagem += `Verificação: ${gerarCodigoVerificacao()}\n\n`;
-  
-  // Usando o símbolo geométrico que simula o Pix
+
   mensagem += `❖ *Pagamento via PIX:*\n`;
   mensagem += `Chave: 30571173845\n`;
   mensagem += `(Por favor, envie o comprovante por aqui!)`;
