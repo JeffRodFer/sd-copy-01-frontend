@@ -444,10 +444,11 @@ function desenharListaAdmin(produtos) {
 
   // 1. Define uma cor de fundo pastel para cada categoria
   const coresCategorias = {
-    'Guarnições': '#fff3e0', // Laranja bem claro
-    'Proteínas': '#ffebee',  // Vermelho bem claro
-    'Bebidas': '#e3f2fd',    // Azul bem claro
-    'Sobremesas': '#f3e5f5'  // Roxo bem claro
+    'Guarnições': '#ecd8b9',
+    'Proteínas': '#f1ccd1',
+    'Bebidas': '#bcd7ea',
+    'Sobremesas': '#dab2e0',
+    'Especiais': '#dbd17b' // Amarelo bem claro para os pratos especiais
   };
 
   // 2. Agrupa os produtos pela categoria
