@@ -475,7 +475,7 @@ function desenharListaAdmin(produtos) {
   const coresCategorias = {
     'Guarnições': '#ecd8b9',
     'Proteínas': '#f1ccd1',
-    'Bebidas': '#bcd7ea',
+    'Bebidas': '#92bddc',
     'Sobremesas': '#dab2e0',
     'Especiais': '#dbd17b' // Amarelo bem claro para os pratos especiais
   };
