@@ -618,7 +618,7 @@ async function calculateOrder() {
   }
 
   // --- BLOCO DE DESTAQUE DO VALOR ---
-  mensagem += '\n';
+  mensagem += '\n'; 
   mensagem += '*===================================*\n';
   mensagem += `💰 *VALOR TOTAL: ${money(totalGeral)}* 💰\n`;
   mensagem += '*===================================*\n\n';
@@ -626,8 +626,9 @@ async function calculateOrder() {
 
   mensagem += `Pedido: ${gerarCodigoPedido()}\n`;
   mensagem += `Verificação: ${gerarCodigoVerificacao()}\n\n`;
-
-  mensagem += `💳 *Pagamento via PIX:*\n`;
+  
+  // Usando o símbolo geométrico que simula o Pix
+  mensagem += `❖ *Pagamento via PIX:*\n`;
   mensagem += `Chave: 30571173845\n`;
   mensagem += `(Por favor, envie o comprovante por aqui!)`;
 
