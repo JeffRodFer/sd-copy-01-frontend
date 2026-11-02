@@ -187,20 +187,18 @@ function renderMarmitas() {
   const container = document.getElementById('marmitas');
   if (!container || !menu) return;
 
-  // 1. Adicionamos os Especiais na lista de grupos do Modal
   const grupos = [
-    { titulo: 'Especiais (Prato Único)', categoriasBd: ['Especiais'], inputName: 'especiais' },
-    { titulo: 'Guarnições', categoriasBd: ['Guarnições'], inputName: 'guarnicoes' },
-    { titulo: 'Proteínas', categoriasBd: ['Proteínas'], inputName: 'proteinas' },
-    { titulo: 'Bebidas', categoriasBd: ['Gaseificadas', 'Sucos Naturais 300ml', 'Polpas 500ml'], inputName: 'bebidas' },
-    { titulo: 'Sobremesas', categoriasBd: ['Sobremesas'], inputName: 'sobremesas' }
+    { titulo: 'Especiais (Apenas 01)', categoriasBd: ['Especiais'], inputName: 'especiais', limite: 1 },
+    { titulo: 'Proteínas (Até 02)', categoriasBd: ['Proteínas'], inputName: 'proteinas', limite: 2 },
+    { titulo: 'Guarnições (Até 04)', categoriasBd: ['Guarnições'], inputName: 'guarnicoes', limite: 4 },
+    { titulo: 'Bebidas', categoriasBd: ['Gaseificadas', 'Sucos Naturais 300ml', 'Polpas 500ml'], inputName: 'bebidas', limite: 99 },
+    { titulo: 'Sobremesas', categoriasBd: ['Sobremesas'], inputName: 'sobremesas', limite: 99 }
   ];
 
   let html = '';
 
   orderState.marmitas.forEach((marmita, index) => {
     const num = String(index + 1).padStart(2, '0');
-    // Verifica se já existe algum especial marcado nesta marmita (para manter bloqueado ao recarregar a tela)
     const temEspecial = marmita.especiais && marmita.especiais.length > 0;
 
     html += `
@@ -220,26 +218,31 @@ function renderMarmitas() {
         .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
 
       if (itensCat.length > 0) {
-        // Bebidas, Sobremesas E Especiais podem ter preço adicional mostrado
-        const mostrarPreco = grupo.titulo === 'Bebidas' || grupo.titulo === 'Sobremesas' || grupo.titulo === 'Especiais (Prato Único)';
+        const mostrarPreco = grupo.inputName === 'bebidas' || grupo.inputName === 'sobremesas' || grupo.inputName === 'especiais';
 
-        // 2. Lógica Visual de Bloqueio (Desabilita Proteínas e Guarnições se um Especial estiver marcado)
-        const isBloqueado = temEspecial && (grupo.inputName === 'guarnicoes' || grupo.inputName === 'proteinas');
-        const opacidade = isBloqueado ? '0.5' : '1';
-        const pointer = isBloqueado ? 'not-allowed' : 'pointer';
+        // Regra Especial: Trava TUDO se o prato único for escolhido
+        const isBloqueadoPeloEspecial = temEspecial && (grupo.inputName === 'guarnicoes' || grupo.inputName === 'proteinas');
 
-        // Gera os checkboxes dos itens
+        // Nova Regra de Quantidade: Conta quantos itens desta categoria o cliente já marcou
+        const itensMarcadosNestaCategoria = marmita[grupo.inputName] ? marmita[grupo.inputName].length : 0;
+        const atingiuLimiteGeral = itensMarcadosNestaCategoria >= grupo.limite;
+
         const itensHtml = itensCat.map(x => {
           const isChecked = marmita[grupo.inputName] && marmita[grupo.inputName].includes(String(x.id)) ? 'checked' : '';
 
-          // 3. O "gatilho" (onchange) que o Especial dispara quando clicado
-          const eventoTrava = grupo.inputName === 'especiais' ? `onchange="travarMarmita(${index})"` : '';
-          const disabledAttr = isBloqueado ? 'disabled' : '';
+          // O item fica desativado se:
+          // 1. Houver um prato especial bloqueando guarnições/proteínas
+          // 2. Ou se a categoria atingiu o limite de cliques E este item específico NÃO está clicado
+          const deveDesativar = isBloqueadoPeloEspecial || (atingiuLimiteGeral && !isChecked);
+
+          const opacidade = deveDesativar ? '0.5' : '1';
+          const pointer = deveDesativar ? 'not-allowed' : 'pointer';
+          const disabledAttr = deveDesativar ? 'disabled' : '';
 
           return `
           <label class="label-${grupo.inputName}-${index}" style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 12px 14px; border-radius: 6px; border: 1px solid #e0d6cc; cursor: ${pointer}; opacity: ${opacidade};">
             <div style="display: flex; align-items: center; gap: 10px;">
-              <input type="checkbox" class="check-${grupo.inputName}-${index}" name="item_${grupo.inputName}_${index}" value="${x.id}" ${isChecked} ${disabledAttr} ${eventoTrava} style="transform: scale(1.3); accent-color: #7b401f;">
+              <input type="checkbox" class="check-${grupo.inputName}-${index}" name="item_${grupo.inputName}_${index}" value="${x.id}" ${isChecked} ${disabledAttr} onchange="travarMarmita(${index})" style="transform: scale(1.3); accent-color: #7b401f;">
               <span style="color: #333; font-weight: 500;">${x.nome}</span>
             </div>
             <span style="font-weight: bold; color: #7b401f;">
@@ -248,8 +251,7 @@ function renderMarmitas() {
           </label>
         `}).join('');
 
-        // Se for Bebida ou Sobremesa, coloca dentro do bloco retrátil (<details>)
-        if (grupo.titulo === 'Bebidas' || grupo.titulo === 'Sobremesas') {
+        if (grupo.inputName === 'bebidas' || grupo.inputName === 'sobremesas') {
           html += `
             <details style="margin-bottom: 20px; background: #faf4ed; border: 1px solid #e19b56; border-radius: 6px; padding: 12px;">
               <summary style="color: #7b401f; font-size: 1.1rem; font-weight: bold; cursor: pointer; outline: none;">
@@ -261,7 +263,6 @@ function renderMarmitas() {
             </details>
           `;
         } else {
-          // Se for Especial, Guarnição ou Proteína, mostra normalmente
           html += `
             <div style="margin-bottom: 20px;">
               <h3 style="color: #7b401f; border-bottom: 2px solid #e0d6cc; padding-bottom: 6px; margin-bottom: 12px; font-size: 1.1rem;">${grupo.titulo}</h3>
@@ -292,10 +293,10 @@ function renderMarmitas() {
   container.innerHTML = html;
 }
 
-// 4. A Função que executa o bloqueio quando o Especial é clicado
+// A Função executa o bloqueio toda vez que qualquer checkbox é clicado
 window.travarMarmita = function (index) {
-  salvarEstadoMarmitas(); // Lê a tela para ver se o cliente marcou ou desmarcou o Especial
-  renderMarmitas(); // Redesenha a tela instantaneamente aplicando o visual de bloqueado ou liberado
+  salvarEstadoMarmitas(); // Atualiza a contagem dos itens selecionados
+  renderMarmitas(); // Redesenha a tela instantaneamente travando os excedentes
 };
 
 
